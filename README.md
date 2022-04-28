@@ -1,3 +1,6 @@
+This Branch will combine several of the repositories listed below, as well as HDF5 files for the final data format.
+
+
 First. Get the container: https://eicweb.phy.anl.gov/containers/eic_container/
 and follow instructions
 
