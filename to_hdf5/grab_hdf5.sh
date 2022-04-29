@@ -10,9 +10,12 @@ ldconfig
 #./config -flags for options. e.g. --enable-parallel
 make
 make install
-export HDF5=${PWD}/hdf5
-export PATH=$PATH:${HDF5}/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HDF5}/lib
+
+export HDF5_DIR=${PWD}/hdf5
+export PATH=$PATH:${HDF5_DIR}/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HDF5_DIR}/lib
 
 cd ../
-echo "HDF5 install done"
+
+echo $HDF5_DIR
+echo "HDF5 Install Done"
