@@ -15,5 +15,4 @@ Output will contain sim_TAGNAME.root and rec_TAGNAME.root files, which correspon
 The files will contain a ROOT TTree with the generated particles, hits at the G4 level, hits after digitization, and clusters. 
 We will mainly be working with hits either before or after digitization.
 
-For HDF5: While still inside the container, navigate to `to_hdf5`, and execute the grab hdf5 script. May need more testing for portability as of 4/28/22
-TODO: Test portabiliby of HDF5
+For HDF5: While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script
