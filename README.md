@@ -23,4 +23,5 @@ We will mainly be working with hits either before or after digitization.
 4. Download and install HDF5
 While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script.
 > make root_to_hdf5
+
 > ./root_to_hdf5 [input root file] [new_hdf5_file.hdf5]
