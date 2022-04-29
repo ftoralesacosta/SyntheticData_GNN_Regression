@@ -1,4 +1,6 @@
-This Branch aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC singularity container, as well as installing __specific__ commits of `Athena`, `reconstruction_benchmarks`, `ip6`, and `juggler` repositories. Lastly, it introduces HDF5 for the final data format.
+** This Branch aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC singularity container, as well as installing __specific__ commits of `Athena`, `reconstruction_benchmarks`, `ip6`, and `juggler` repositories. Lastly, it introduces HDF5 for the final data format.
+*** Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
+
 1. Download the EIC container
 > ./get_eic-container.sh
 
