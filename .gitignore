@@ -1,0 +1,167 @@
+*.d
+*.o
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# build trees
+build/*
+DEBUG*/*
+BUILD*/*
+RELEASE*/*
+TEST*/*
+doc/docs/*
+
+# cmake
+CMakeCache.txt
+CMakeFiles
+#Makefile
+cmake_install.cmake
+install_manifest.txt
+
+# vim 
+~*
+*.swp
+*.swo
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints
+
+# ROOT file
+*.root
+*.sif
+**old
+install/*
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# build trees
+DEBUG*/*
+BUILD*/*
+RELEASE*/*
+TEST*/*
+.local/*
+
+# cmake
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+install_manifest.txt
+
+# vim 
+~*
+*.swp
+*.swo
+
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints
+
+# test for calorimeter
+calorimeters/test/
+*.d
+*.pcm
+
+# transient directories and files
+setup
+results
+*.root
+fieldmaps
+eic-env.sh
+sim_output
+*.obj
+*.hepmc
+!*.png
+
+*.prim
+*/*.eps
+*/*/*.eps
+*/*/*.png
+*/*/*.pdf
+*.root
+build/*
+.DAWN*
+*/*.pyc
+**.pyc
+
+images/*
+doc/*
+
+accelerator
+eic
+
+*.swp
+
+fieldmaps
+
+manifest.txt
+acts.txt
+acts2.txt
+!*.png
+
+*.prim
+*/*.eps
+*/*/*.eps
+*/*/*.png
+*/*/*.pdf
+*.root
+build/*
+.DAWN*
+*/*.pyc
+**.pyc
+
+images/*
+doc/*
+
+accelerator
+eic_ip6
+eic
+ip6_build
+ip6
+ip6_parent
+juggler
+build
+athena
+reconstruction_benchmarks
+benchmarks
+development
+
+*.swp
+
+fieldmaps
+
+manifest.txt
+acts.txt
+acts2.txt
+
+materials-map.cbor
+
+
+nohup.out
