@@ -155,6 +155,7 @@ void write_data(
       for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) 
       {
         if (hcalE[h_hit] > 1e10) continue; //Omit spikey cells
+        if ( hcalE[h_hit] <= 0 ) continue; //Omit Empty cells
         hcal_data[(iblock*hcalNHits_max + h_fill)*cal_row_size + 0] = hcalE[h_hit] * 1000; //GeV->MeV
         hcal_data[(iblock*hcalNHits_max + h_fill)*cal_row_size + 1] = hcalX[h_hit]; 
         hcal_data[(iblock*hcalNHits_max + h_fill)*cal_row_size + 2] = hcalY[h_hit]; 
@@ -167,6 +168,7 @@ void write_data(
       for (size_t e_hit = 0; e_hit < ecalNHits; e_hit++) 
       {
         if (ecalE[e_hit] > 1e10) continue;
+        if ( ecalE[e_hit] <= 0 ) continue; 
         ecal_data[(iblock*ecalNHits_max + e_fill)*cal_row_size + 0] = ecalE[e_hit] * 1000; //GeV->MeV
         ecal_data[(iblock*ecalNHits_max + e_fill)*cal_row_size + 1] = ecalX[e_hit]; 
         ecal_data[(iblock*ecalNHits_max + e_fill)*cal_row_size + 2] = ecalY[e_hit]; 
