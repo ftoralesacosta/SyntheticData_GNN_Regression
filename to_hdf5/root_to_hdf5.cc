@@ -35,8 +35,7 @@ void find_max_dims(
     char *argv_first[], 
     char *argv_last[], 
     size_t &eventsN_max,
-    size_t &hcalNHits_max, 
-    size_t &ecalNHits_max, 
+    size_t &calo_NHits_max, 
     size_t &mcNParticles_max) { 
 
   for (char **p = argv_first; p != argv_last; p++) {
@@ -63,13 +62,13 @@ void find_max_dims(
       size_t ecalNHits = ecalE.GetSize();
       size_t mcNParticles = mcMass.GetSize();
 
-      hcalNHits_max = std::max(hcalNHits_max, hcalNHits);
-      ecalNHits_max = std::max(ecalNHits_max, ecalNHits);
+      calo_NHits_max = std::max(calo_NHits_max, hcalNHits);
+      calo_NHits_max = std::max(calo_NHits_max, ecalNHits);
       mcNParticles_max = std::max(mcNParticles_max, mcNParticles);
 
       if (i%1000 == 0) {
-        fprintf(stderr, "%s: %d: event = %i / %u, max HCal Hits= %u, max ECal Hits= %u, max MC Particles = %u\n",
-            __func__, __LINE__, i, eventsN_max, hcalNHits_max, ecalNHits_max, mcNParticles_max);
+        fprintf(stderr, "%s: %d: event = %i / %u, max Calo Hits= %u, max MC Particles = %u\n",
+            __func__, __LINE__, i, eventsN_max, calo_NHits_max, mcNParticles_max);
       }
 
       i++;
@@ -95,8 +94,7 @@ void write_data(
     const hsize_t *ecal_dim_extend, 
     const hsize_t *mc_dim_extend,
     const UInt_t eventsN_max, 
-    const UInt_t hcalNHits_max, 
-    const UInt_t ecalNHits_max, 
+    const UInt_t calo_NHits_max, 
     const UInt_t mcNParticles_max, 
     const UInt_t block_size,
     char *argv_first[], char *argv_last[]) 
@@ -135,8 +133,8 @@ void write_data(
     //events->SetBranchAddress("HcalEndcapPHitsReco.energy", &hcalE);
 
 
-    std::vector<float> hcal_data(block_size * hcalNHits_max * cal_row_size, NAN);
-    std::vector<float> ecal_data(block_size * ecalNHits_max * cal_row_size, NAN);
+    std::vector<float> hcal_data(block_size * calo_NHits_max * cal_row_size, NAN);
+    std::vector<float> ecal_data(block_size * calo_NHits_max * cal_row_size, NAN);
     std::vector<float> mc_data(block_size * mcNParticles_max * mc_row_size, NAN);
 
     //Check the max dims are passed correctly
@@ -156,10 +154,10 @@ void write_data(
       {
         if (hcalE[h_hit] > 1e10) continue; //Omit spikey cells
         if ( hcalE[h_hit] <= 0 ) continue; //Omit Empty cells
-        hcal_data[(iblock*hcalNHits_max + h_fill)*cal_row_size + 0] = hcalE[h_hit] * 1000; //GeV->MeV
-        hcal_data[(iblock*hcalNHits_max + h_fill)*cal_row_size + 1] = hcalX[h_hit]; 
-        hcal_data[(iblock*hcalNHits_max + h_fill)*cal_row_size + 2] = hcalY[h_hit]; 
-        hcal_data[(iblock*hcalNHits_max + h_fill)*cal_row_size + 3] = hcalZ[h_hit]; //note: Z range is 3800-500cm for some reason
+        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 0] = hcalE[h_hit] * 1000; //GeV->MeV
+        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 1] = hcalX[h_hit]; 
+        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 2] = hcalY[h_hit]; 
+        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 3] = hcalZ[h_hit]; //note: Z range is 3800-500cm for some reason
         h_fill++;
       }
 
@@ -169,10 +167,10 @@ void write_data(
       {
         if (ecalE[e_hit] > 1e10) continue;
         if ( ecalE[e_hit] <= 0 ) continue; 
-        ecal_data[(iblock*ecalNHits_max + e_fill)*cal_row_size + 0] = ecalE[e_hit] * 1000; //GeV->MeV
-        ecal_data[(iblock*ecalNHits_max + e_fill)*cal_row_size + 1] = ecalX[e_hit]; 
-        ecal_data[(iblock*ecalNHits_max + e_fill)*cal_row_size + 2] = ecalY[e_hit]; 
-        ecal_data[(iblock*ecalNHits_max + e_fill)*cal_row_size + 3] = ecalZ[e_hit]; 
+        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 0] = ecalE[e_hit] * 1000; //GeV->MeV
+        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 1] = ecalX[e_hit]; 
+        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 2] = ecalY[e_hit]; 
+        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 3] = ecalZ[e_hit]; 
         e_fill++;
       }
 
@@ -207,8 +205,8 @@ void write_data(
 
         if (print_hcal){
           for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) {
-            float E = hcal_data[(iblock*hcalNHits_max + h_hit)*cal_row_size + 0];
-            float Z = hcal_data[(iblock*hcalNHits_max + h_hit)*cal_row_size + 3];
+            float E = hcal_data[(iblock*calo_NHits_max + h_hit)*cal_row_size + 0];
+            float Z = hcal_data[(iblock*calo_NHits_max + h_hit)*cal_row_size + 3];
             if (std::isnan(E)) break;
             if (h_hit%10 == 0) 
             {
@@ -327,8 +325,7 @@ int main(int argc, char *argv[]){
   static const size_t mc_row_size = 10; //Number of MC truth variables
 
   size_t eventsN_max = 0;
-  size_t hcalNHits_max = 0;
-  size_t ecalNHits_max = 0;
+  size_t calo_NHits_max = 0;
   size_t mcNParticles_max = 0;
   size_t block_size = 1000; //affects chunk size, 
 
@@ -336,8 +333,8 @@ int main(int argc, char *argv[]){
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, hcalNHits_max, ecalNHits_max,mcNParticles_max);
-  /* eventsN_max = 10000; hcalNHits_max = 1318; ecalNHits_max = 1035; mcNParticles_max = 15; */ 
+  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
+  /* eventsN_max = 10000; calo_NHits_max = 1318; calo_NHits_max = 1035; mcNParticles_max = 15; */ 
   //saved for rec_piplus_Energy_0-100GeV.root
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
@@ -347,8 +344,8 @@ int main(int argc, char *argv[]){
   // The tensor dimension for each new chunk of events
 
   //The chunking of data can be edited for performance
-  hsize_t hcal_dim_extend[RANK] = {block_size, hcalNHits_max, cal_row_size};
-  hsize_t ecal_dim_extend[RANK] = {block_size, ecalNHits_max, cal_row_size};
+  hsize_t hcal_dim_extend[RANK] = {block_size, calo_NHits_max, cal_row_size};
+  hsize_t ecal_dim_extend[RANK] = {block_size, calo_NHits_max, cal_row_size};
   hsize_t mc_dim_extend[RANK] = {block_size, mcNParticles_max, mc_row_size};
 
   //Check the hyperslab/extension dimensions are correct
@@ -362,8 +359,8 @@ int main(int argc, char *argv[]){
 
   // The maximum tensor dimension, for unlimited number of events
   // a.k.a. the overall dimensions of the dataset
-  hsize_t hcal_dim_max[RANK] = {H5S_UNLIMITED, hcalNHits_max, cal_row_size};
-  hsize_t ecal_dim_max[RANK] = {H5S_UNLIMITED, ecalNHits_max, cal_row_size};
+  hsize_t hcal_dim_max[RANK] = {H5S_UNLIMITED, calo_NHits_max, cal_row_size};
+  hsize_t ecal_dim_max[RANK] = {H5S_UNLIMITED, calo_NHits_max, cal_row_size};
   hsize_t mc_dim_max[RANK] = {H5S_UNLIMITED, mcNParticles_max, mc_row_size};
 
   // The extensible HDF5 data space
@@ -443,7 +440,7 @@ int main(int argc, char *argv[]){
   write_data(hcal_data_set, ecal_data_set, mc_data_set,
       cal_row_size, mc_row_size,
       offset, hcal_dim_extend, ecal_dim_extend, mc_dim_extend,
-      eventsN_max, hcalNHits_max, ecalNHits_max, mcNParticles_max, block_size,argv + 1, argv + argc - 1);
+      eventsN_max, calo_NHits_max, mcNParticles_max, block_size,argv + 1, argv + argc - 1);
   fprintf(stderr,"\n\n%s: %d: [Complete] \n\n",__func__,__LINE__);
 
   file.close();
