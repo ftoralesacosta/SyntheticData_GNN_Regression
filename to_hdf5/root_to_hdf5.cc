@@ -133,9 +133,9 @@ void write_data(
     //events->SetBranchAddress("HcalEndcapPHitsReco.energy", &hcalE);
 
 
-    std::vector<float> hcal_data(block_size * calo_NHits_max * cal_row_size, NAN);
-    std::vector<float> ecal_data(block_size * calo_NHits_max * cal_row_size, NAN);
-    std::vector<float> mc_data(block_size * mcNParticles_max * mc_row_size, NAN);
+    std::vector<float> hcal_data(block_size * cal_row_size * calo_NHits_max, NAN);
+    std::vector<float> ecal_data(block_size * cal_row_size * calo_NHits_max, NAN);
+    std::vector<float> mc_data(block_size *  mc_row_size * mcNParticles_max, NAN);
 
     //Check the max dims are passed correctly
 
@@ -154,10 +154,10 @@ void write_data(
       {
         if (hcalE[h_hit] > 1e10) continue; //Omit spikey cells
         if ( hcalE[h_hit] <= 0 ) continue; //Omit Empty cells
-        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 0] = hcalE[h_hit] * 1000; //GeV->MeV
-        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 1] = hcalX[h_hit]; 
-        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 2] = hcalY[h_hit]; 
-        hcal_data[(iblock*calo_NHits_max + h_fill)*cal_row_size + 3] = hcalZ[h_hit]; //note: Z range is 3800-500cm for some reason
+        hcal_data[(iblock*cal_row_size + 0)*calo_NHits_max + h_fill] = hcalE[h_hit] * 1000; //GeV->MeV
+        hcal_data[(iblock*cal_row_size + 1)*calo_NHits_max + h_fill] = hcalX[h_hit]; 
+        hcal_data[(iblock*cal_row_size + 2)*calo_NHits_max + h_fill] = hcalY[h_hit]; 
+        hcal_data[(iblock*cal_row_size + 3)*calo_NHits_max + h_fill] = hcalZ[h_hit]; //note: Z range is 3800-500cm for some reason
         h_fill++;
       }
 
@@ -167,10 +167,10 @@ void write_data(
       {
         if (ecalE[e_hit] > 1e10) continue;
         if ( ecalE[e_hit] <= 0 ) continue; 
-        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 0] = ecalE[e_hit] * 1000; //GeV->MeV
-        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 1] = ecalX[e_hit]; 
-        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 2] = ecalY[e_hit]; 
-        ecal_data[(iblock*calo_NHits_max + e_fill)*cal_row_size + 3] = ecalZ[e_hit]; 
+        ecal_data[(iblock*cal_row_size + 0)*calo_NHits_max + e_fill] = ecalE[e_hit] * 1000; //GeV->MeV
+        ecal_data[(iblock*cal_row_size + 1)*calo_NHits_max + e_fill] = ecalX[e_hit]; 
+        ecal_data[(iblock*cal_row_size + 2)*calo_NHits_max + e_fill] = ecalY[e_hit]; 
+        ecal_data[(iblock*cal_row_size + 3)*calo_NHits_max + e_fill] = ecalZ[e_hit]; 
         e_fill++;
       }
 
@@ -185,16 +185,16 @@ void write_data(
         float mcP = hypot(mcPX[particle], mcPY[particle], mcPZ[particle]);
         float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 0] = mcPDG[particle]; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 1] = mcSimulatorStatus[particle]; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 2] = mcGeneratorStatus[particle]; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 3] = mcPX[particle]; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 4] = mcPY[particle]; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 5] = mcPZ[particle]; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 6] = mcMass[particle]; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 7] = mcPT; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 8] = mcP; 
-        mc_data[(iblock*mcNParticles + mc_fill)*mc_row_size + 9] = mcTheta; 
+        mc_data[(iblock*mc_row_size + 0)*mcNParticles + mc_fill] = mcPDG[particle]; 
+        mc_data[(iblock*mc_row_size + 1)*mcNParticles + mc_fill] = mcSimulatorStatus[particle]; 
+        mc_data[(iblock*mc_row_size + 2)*mcNParticles + mc_fill] = mcGeneratorStatus[particle]; 
+        mc_data[(iblock*mc_row_size + 3)*mcNParticles + mc_fill] = mcPX[particle]; 
+        mc_data[(iblock*mc_row_size + 4)*mcNParticles + mc_fill] = mcPY[particle]; 
+        mc_data[(iblock*mc_row_size + 5)*mcNParticles + mc_fill] = mcPZ[particle]; 
+        mc_data[(iblock*mc_row_size + 6)*mcNParticles + mc_fill] = mcMass[particle]; 
+        mc_data[(iblock*mc_row_size + 7)*mcNParticles + mc_fill] = mcPT; 
+        mc_data[(iblock*mc_row_size + 8)*mcNParticles + mc_fill] = mcP; 
+        mc_data[(iblock*mc_row_size + 9)*mcNParticles + mc_fill] = mcTheta; 
         mc_fill++;
       }// If sim/gun is working, each event should only have one particle with GenStatus = 1
 
@@ -205,8 +205,8 @@ void write_data(
 
         if (print_hcal){
           for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) {
-            float E = hcal_data[(iblock*calo_NHits_max + h_hit)*cal_row_size + 0];
-            float Z = hcal_data[(iblock*calo_NHits_max + h_hit)*cal_row_size + 3];
+            float E = hcal_data[(iblock*cal_row_size + 0)*calo_NHits_max + h_hit];
+            float Z = hcal_data[(iblock*cal_row_size + 3)*calo_NHits_max + h_hit];
             if (std::isnan(E)) break;
             if (h_hit%10 == 0) 
             {
@@ -219,14 +219,14 @@ void write_data(
         if (print_mc) {
           for (size_t particle = 0; particle < mcNParticles; particle++) {
             float Mass = mcMass[particle];
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Generator Status = " << mc_data[(iblock*mcNParticles + particle)*mc_row_size + 2] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PX = " << mc_data[(iblock*mcNParticles + particle)*mc_row_size + 3] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PY = " << mc_data[(iblock*mcNParticles + particle)*mc_row_size + 4] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PZ = " << mc_data[(iblock*mcNParticles + particle)*mc_row_size + 5] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Theta = " << mc_data[(iblock*mcNParticles + particle)*mc_row_size + 9] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Momentum = " << mc_data[(iblock*mcNParticles + particle)*mc_row_size + 8] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Generator Status = " << mc_data[(iblock*mc_row_size + 2)*mcNParticles +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PX = " << mc_data[(iblock*mc_row_size + 3)*mcNParticles +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PY = " << mc_data[(iblock*mc_row_size + 4)*mcNParticles +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PZ = " << mc_data[(iblock*mc_row_size + 5)*mcNParticles +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Theta = " << mc_data[(iblock*mc_row_size + 9)*mcNParticles +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Momentum = " << mc_data[(iblock*mc_row_size + 8)*mcNParticles +particle] << std::endl;
             std::cout << std::endl;
-            break; //first index should be filled, followed by nans. 
+            break; //first index should be filled, followed by nans. rm this if want to see all particles
           }           
           std::cout << "Event Number = " << i << std::endl;
 
