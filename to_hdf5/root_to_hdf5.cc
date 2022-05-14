@@ -344,9 +344,9 @@ int main(int argc, char *argv[]){
   // The tensor dimension for each new chunk of events
 
   //The chunking of data can be edited for performance
-  hsize_t hcal_dim_extend[RANK] = {block_size, calo_NHits_max, cal_row_size};
-  hsize_t ecal_dim_extend[RANK] = {block_size, calo_NHits_max, cal_row_size};
-  hsize_t mc_dim_extend[RANK] = {block_size, mcNParticles_max, mc_row_size};
+  hsize_t hcal_dim_extend[RANK] = {block_size,  cal_row_size, calo_NHits_max};
+  hsize_t ecal_dim_extend[RANK] = {block_size, cal_row_size, calo_NHits_max};
+  hsize_t mc_dim_extend[RANK] = {block_size, mc_row_size, mcNParticles_max};
 
   //Check the hyperslab/extension dimensions are correct
   fprintf(stderr,"\n%s: %d: HDF5 Chunk Cache Size = %u\n",__func__,__LINE__,block_size);
@@ -359,9 +359,9 @@ int main(int argc, char *argv[]){
 
   // The maximum tensor dimension, for unlimited number of events
   // a.k.a. the overall dimensions of the dataset
-  hsize_t hcal_dim_max[RANK] = {H5S_UNLIMITED, calo_NHits_max, cal_row_size};
-  hsize_t ecal_dim_max[RANK] = {H5S_UNLIMITED, calo_NHits_max, cal_row_size};
-  hsize_t mc_dim_max[RANK] = {H5S_UNLIMITED, mcNParticles_max, mc_row_size};
+  hsize_t hcal_dim_max[RANK] = {H5S_UNLIMITED, cal_row_size, calo_NHits_max};
+  hsize_t ecal_dim_max[RANK] = {H5S_UNLIMITED, cal_row_size, calo_NHits_max};
+  hsize_t mc_dim_max[RANK] =  {H5S_UNLIMITED, mc_row_size, mcNParticles_max};
 
   // The extensible HDF5 data space
   H5::DataSpace hcal_data_space(RANK, hcal_dim_extend, hcal_dim_max);
