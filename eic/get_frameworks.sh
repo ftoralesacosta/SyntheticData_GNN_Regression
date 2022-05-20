@@ -16,7 +16,7 @@ cd ../..
 #Beamline
 git clone https://eicweb.phy.anl.gov/EIC/detectors/ip6.git
 cd ip6
-git reset --hard f31bac7b8f8ae0f2088321191a1e116640c48296
+git reset --hard 45ed8e8a77862dd727aabe5aad943e4adccec020
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=../../development
 make install
@@ -25,7 +25,7 @@ cp -r ip6/ip6 athena/
 
 git clone https://eicweb.phy.anl.gov/EIC/juggler.git
 cd juggler/
-git reset --hard ece2557345c0b600b0c564f61fa5f4ae6420b285
+git reset --hard eda9e3ed1265f1a3da2f8a197eb7bd26cb7b9f77
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=../../development -DCMAKE_CXX_STANDARD=20
 make install
