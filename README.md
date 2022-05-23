@@ -14,7 +14,7 @@ This will download the nightly container (which we no longer use) and creates a 
 If running on a headless machine, one can try using `gdown` package available through `pip`
 
 3. Enter the container downloaded in Step 2  
-> ./enter_container
+> ./enter_container.sh
 
 The enter_container script importantly specifies the container to use before running the `./eic-shell` command.
 One can set this environment variable themselves with `export SIF=$PWD/working_image.sif`.
@@ -59,7 +59,7 @@ While still inside the container, navigate to `to_hdf5`, and `source` the grab h
 
 ### Once setup
 To re-enter the container, one just need to run two commands:
-> ./eic-shell
+> ./enter_container.sh
 
 > source setup_env.sh
 
