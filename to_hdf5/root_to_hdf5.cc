@@ -154,10 +154,21 @@ void write_data(
       {
         if (hcalE[h_hit] > 1e10) continue; //Omit spikey cells
         if ( hcalE[h_hit] <= 0 ) continue; //Omit Empty cells
-        hcal_data[(iblock*cal_row_size + 0)*calo_NHits_max + h_fill] = hcalE[h_hit] * 1000; //GeV->MeV
-        hcal_data[(iblock*cal_row_size + 1)*calo_NHits_max + h_fill] = hcalX[h_hit]; 
-        hcal_data[(iblock*cal_row_size + 2)*calo_NHits_max + h_fill] = hcalY[h_hit]; 
-        hcal_data[(iblock*cal_row_size + 3)*calo_NHits_max + h_fill] = hcalZ[h_hit]; //note: Z range is 3800-500cm for some reason
+        
+        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max+ h_fill;
+        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max+ h_fill;
+        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max+ h_fill;
+        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max+ h_fill;
+        //Index for flattened 3D vector
+        
+        hcal_data[E_index] = hcalE[h_hit] *1000;
+        hcal_data[X_index] = hcalX[h_hit]; 
+        hcal_data[Y_index] = hcalY[h_hit]; 
+        hcal_data[Z_index] = hcalZ[h_hit]; 
+
+        //OLD WAY
+        /* hcal_data[(iblock*cal_row_size + 1)*calo_NHits_max + h_fill] = hcalX[h_hit]; */ 
+
         h_fill++;
       }
 
@@ -167,10 +178,18 @@ void write_data(
       {
         if (ecalE[e_hit] > 1e10) continue;
         if ( ecalE[e_hit] <= 0 ) continue; 
-        ecal_data[(iblock*cal_row_size + 0)*calo_NHits_max + e_fill] = ecalE[e_hit] * 1000; //GeV->MeV
-        ecal_data[(iblock*cal_row_size + 1)*calo_NHits_max + e_fill] = ecalX[e_hit]; 
-        ecal_data[(iblock*cal_row_size + 2)*calo_NHits_max + e_fill] = ecalY[e_hit]; 
-        ecal_data[(iblock*cal_row_size + 3)*calo_NHits_max + e_fill] = ecalZ[e_hit]; 
+
+        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max+ e_fill;
+        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max+ e_fill;
+        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max+ e_fill;
+        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max+ e_fill;
+        //Index for flattened 3D vector
+        
+        ecal_data[E_index] = ecalE[e_hit] *1000;
+        ecal_data[X_index] = ecalX[e_hit]; 
+        ecal_data[Y_index] = ecalY[e_hit]; 
+        ecal_data[Z_index] = ecalZ[e_hit]; 
+
         e_fill++;
       }
 
