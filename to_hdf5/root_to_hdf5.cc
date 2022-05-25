@@ -327,7 +327,7 @@ int main(int argc, char *argv[]){
   size_t eventsN_max = 0;
   size_t calo_NHits_max = 0;
   size_t mcNParticles_max = 0;
-  size_t block_size = 1000; //affects chunk size, 
+  size_t block_size = 100; //affects chunk size, 
 
   //Constants for Layering HCal
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
