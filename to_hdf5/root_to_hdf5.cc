@@ -204,16 +204,23 @@ void write_data(
         float mcP = hypot(mcPX[particle], mcPY[particle], mcPZ[particle]);
         float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
 
-        mc_data[(iblock*mc_row_size + 0)*mcNParticles + mc_fill] = mcPDG[particle]; 
-        mc_data[(iblock*mc_row_size + 1)*mcNParticles + mc_fill] = mcSimulatorStatus[particle]; 
-        mc_data[(iblock*mc_row_size + 2)*mcNParticles + mc_fill] = mcGeneratorStatus[particle]; 
-        mc_data[(iblock*mc_row_size + 3)*mcNParticles + mc_fill] = mcPX[particle]; 
-        mc_data[(iblock*mc_row_size + 4)*mcNParticles + mc_fill] = mcPY[particle]; 
-        mc_data[(iblock*mc_row_size + 5)*mcNParticles + mc_fill] = mcPZ[particle]; 
-        mc_data[(iblock*mc_row_size + 6)*mcNParticles + mc_fill] = mcMass[particle]; 
-        mc_data[(iblock*mc_row_size + 7)*mcNParticles + mc_fill] = mcPT; 
-        mc_data[(iblock*mc_row_size + 8)*mcNParticles + mc_fill] = mcP; 
-        mc_data[(iblock*mc_row_size + 9)*mcNParticles + mc_fill] = mcTheta; 
+        mc_data[(iblock*mc_row_size + 0)*mcNParticles_max + mc_fill] = mcPDG[particle]; 
+        mc_data[(iblock*mc_row_size + 1)*mcNParticles_max + mc_fill] = mcSimulatorStatus[particle]; 
+        mc_data[(iblock*mc_row_size + 2)*mcNParticles_max + mc_fill] = mcGeneratorStatus[particle]; 
+        mc_data[(iblock*mc_row_size + 3)*mcNParticles_max + mc_fill] = mcPX[particle]; 
+        mc_data[(iblock*mc_row_size + 4)*mcNParticles_max + mc_fill] = mcPY[particle]; 
+        mc_data[(iblock*mc_row_size + 5)*mcNParticles_max + mc_fill] = mcPZ[particle]; 
+        mc_data[(iblock*mc_row_size + 6)*mcNParticles_max + mc_fill] = mcMass[particle]; 
+        mc_data[(iblock*mc_row_size + 7)*mcNParticles_max + mc_fill] = mcPT; 
+        mc_data[(iblock*mc_row_size + 8)*mcNParticles_max + mc_fill] = mcP; 
+        mc_data[(iblock*mc_row_size + 9)*mcNParticles_max + mc_fill] = mcTheta; 
+
+        /* std::cout << " " << std::endl; */
+        /* for (size_t ivar = 0; ivar < mc_row_size; ivar++) { */
+        /*   std::cout << "index = " << (iblock*mc_row_size + ivar)*mcNParticles_max + mc_fill<< " / " << mc_data.size() << std::endl; */
+        /* } */
+        /* std::cout << " " << std::endl; */
+
         mc_fill++;
       }// If sim/gun is working, each event should only have one particle with GenStatus = 1
 
@@ -236,14 +243,14 @@ void write_data(
         }
 
         if (print_mc) {
-          for (size_t particle = 0; particle < mcNParticles; particle++) {
+          for (size_t particle = 0; particle < mcNParticles_max; particle++) {
             float Mass = mcMass[particle];
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Generator Status = " << mc_data[(iblock*mc_row_size + 2)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PX = " << mc_data[(iblock*mc_row_size + 3)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PY = " << mc_data[(iblock*mc_row_size + 4)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PZ = " << mc_data[(iblock*mc_row_size + 5)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Theta = " << mc_data[(iblock*mc_row_size + 9)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Momentum = " << mc_data[(iblock*mc_row_size + 8)*mcNParticles +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " GenStatus = "<<mc_data[(iblock*mc_row_size+2)*mcNParticles_max+particle]<<std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PX = " << mc_data[(iblock*mc_row_size + 3)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PY = " << mc_data[(iblock*mc_row_size + 4)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PZ = " << mc_data[(iblock*mc_row_size + 5)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " Theta = "<< mc_data[(iblock*mc_row_size+9)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " Momentum = "<< mc_data[(iblock*mc_row_size+8)*mcNParticles_max+particle]<<std::endl;
             std::cout << std::endl;
             break; //first index should be filled, followed by nans. rm this if want to see all particles
           }           
@@ -275,7 +282,7 @@ void write_data(
           };
 
           const hsize_t mc_dim_extended[RANK] = {
-            offset[0] + mc_dim_extend[0], mc_dim_extend[1], mc_dim_extend[2]
+            offset[0]  +  mc_dim_extend[0],   mc_dim_extend[1],   mc_dim_extend[2]
           };
 
           // Extend to the new dimension
@@ -353,7 +360,7 @@ int main(int argc, char *argv[]){
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
   find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
-  /* eventsN_max = 10000; calo_NHits_max = 1318; calo_NHits_max = 1035; mcNParticles_max = 15; */ 
+  /* eventsN_max = 10000; calo_NHits_max = 1318*2; mcNParticles_max = 15; */ 
   //saved for rec_piplus_Energy_0-100GeV.root
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
@@ -368,7 +375,7 @@ int main(int argc, char *argv[]){
   hsize_t mc_dim_extend[RANK] = {block_size, mc_row_size, mcNParticles_max};
 
   //Check the hyperslab/extension dimensions are correct
-  fprintf(stderr,"\n%s: %d: HDF5 Chunk Cache Size = %u\n",__func__,__LINE__,block_size);
+  fprintf(stderr,"\n%s: %d: HDF5 Chunk Size = %u\n",__func__,__LINE__,block_size);
   fprintf(stderr, "%s: %d: hcal_dim_extend = %u %u %u\n", 
       __func__, __LINE__, hcal_dim_extend[0],hcal_dim_extend[1],hcal_dim_extend[2]);
   fprintf(stderr, "%s: %d: ecal_dim_extend = %u %u %u\n", 
