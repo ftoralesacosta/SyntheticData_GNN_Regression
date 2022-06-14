@@ -111,11 +111,13 @@ void write_data(
 
     const char *calo_var[] = {"energy", "position.x", "position.y", "position.z"};
     TTreeReaderArray<Float_t> hcalE( events, Form("%s.energy",hcal_str));
+    TTreeReaderArray<Float_t> hcalT( events, Form("%s.time",hcal_str));
     TTreeReaderArray<Float_t> hcalX( events, Form("%s.position.x",hcal_str));
     TTreeReaderArray<Float_t> hcalY( events, Form("%s.position.y",hcal_str));
     TTreeReaderArray<Float_t> hcalZ( events, Form("%s.position.z",hcal_str));
 
     TTreeReaderArray<Float_t> ecalE( events, Form("%s.energy",ecal_str));
+    TTreeReaderArray<Float_t> ecalT( events, Form("%s.time",ecal_str));
     TTreeReaderArray<Float_t> ecalX( events, Form("%s.position.x",ecal_str));
     TTreeReaderArray<Float_t> ecalY( events, Form("%s.position.y",ecal_str));
     TTreeReaderArray<Float_t> ecalZ( events, Form("%s.position.z",ecal_str));
@@ -145,16 +147,17 @@ void write_data(
       int iblock = i % block_size;
       //writing to file is done every [block_size] number of events
       //this variable keeps track of the current increment within a block,
-      //as opposed to [i] which is looping through all events
+      //as opposed to [i] which is looping through all events. Note 'i' is 
+      //incremented only after an event passes selection (hit requirements)
 
       size_t h_fill = 0; //fill iff non-spikey cell found
       size_t hcalNHits = hcalE.GetSize();
-      if (hcalNHits == 0) continue; //skip events with no hcal hits
 
       for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) 
       {
         if (hcalE[h_hit] > 1e10) continue; //Omit spikey cells
-        if ( hcalE[h_hit] <= 0 ) continue; //Omit Empty cells
+        if (hcalE[h_hit] <= 0.0001 ) continue; //Omit Empty Cells and MIPS
+        if (hcalT[h_hit] > 200) continue; //cut long tails in time (realistic for EIC)
         
         size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max+ h_fill;
         size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max+ h_fill;
@@ -172,13 +175,18 @@ void write_data(
 
         h_fill++;
       }
+      if (hcalNHits == 0) continue; //skip events with no hcal hits
+      if (h_fill == 0) continue; //skip events hits passing selection
+
 
       size_t e_fill = 0;
       size_t ecalNHits = ecalE.GetSize();
+
       for (size_t e_hit = 0; e_hit < ecalNHits; e_hit++) 
       {
         if (ecalE[e_hit] > 1e10) continue;
-        if ( ecalE[e_hit] <= 0 ) continue; 
+        if (ecalE[e_hit] <= 0.0001 ) continue; 
+        if (ecalT[e_hit] > 200 ) continue; 
 
         size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max+ e_fill;
         size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max+ e_fill;
@@ -193,6 +201,8 @@ void write_data(
 
         e_fill++;
       }
+      if (ecalNHits == 0) continue; //skip events with no hcal hits
+      if (e_fill == 0) continue; //skip events hits passing selection
 
       size_t mc_fill = 0;
       size_t mcNParticles = mcMass.GetSize();
