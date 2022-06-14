@@ -149,6 +149,7 @@ void write_data(
 
       size_t h_fill = 0; //fill iff non-spikey cell found
       size_t hcalNHits = hcalE.GetSize();
+      if (hcalNHits == 0) continue; //skip events with no hcal hits
 
       for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) 
       {
