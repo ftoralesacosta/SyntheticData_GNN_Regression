@@ -130,11 +130,11 @@ void add_dataset(
   return;
 }
 
-
 void create_calo_images(
     H5::DataSet hcal_dataset,
     H5::DataSet ecal_dataset,
     H5::DataSet image_dataset,
+    float Fill_Val,
     const size_t n_images,
     double * img_means,
     double *img_stdevs,
@@ -179,10 +179,11 @@ void create_calo_images(
   ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
 
   hsize_t img_offset[rank] = {0,0,0};
-  std::vector<float>image_data( chunk_events* N_img_vars * N_img_hits, NAN );
+  std::vector<float>image_data( chunk_events* N_img_vars * N_img_hits, Fill_Val);
   size_t Img_MaxDims[rank] = {N_img_hits, N_img_vars, chunk_events}; 
 
   //EVENT LOOP
+  /* N_Events = 100; */
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
 
     size_t ichunk = ievt % chunk_events; //for reading calo 1 chunk at a time
@@ -193,16 +194,11 @@ void create_calo_images(
       for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
 
         size_t layer_boundaries[n_layers+1] = 
-        {
-          z_offset, 
-          z_offset+length_1, 
-          z_offset+length_1+length_2,
-          z_max 
-        }; // 4 'edges' defining 3 hcal layers.
-
-        size_t ecal_hit_count = 0;
+        { z_offset, z_offset+length_1, 
+          z_offset+length_1+length_2, z_max };
 
         //ECal Hit Loop
+        size_t ecal_hit_count = 0;
         for (size_t ihit = 0; ihit < N_img_hits; ihit++) {
           if(std::isnan(ecal_data[ichunk][0][ihit])) break;
 
@@ -223,7 +219,6 @@ void create_calo_images(
           image_data[L2_index] = (layer_boundaries[2] - img_means[5])/img_stdevs[5];
 
           ecal_hit_count++;
-
         }
 
         //HCal Hit Loop
@@ -233,13 +228,14 @@ void create_calo_images(
           size_t hcal_hit = ihit + ecal_hit_count;
           float  hcal_z = hcal_data[ichunk][3][ihit];
           size_t hcal_depth = get_depth(hcal_z,z_offset,length_1,length_2,z_max);
+
           size_t E_index  = flat_index(Img_MaxDims, hcal_hit, 0, i_image);
           size_t X_index  = flat_index(Img_MaxDims, hcal_hit, 1, i_image);
           size_t Y_index  = flat_index(Img_MaxDims, hcal_hit, 2, i_image);
           size_t D_index  = flat_index(Img_MaxDims, hcal_hit, 3, i_image);
           size_t L1_index = flat_index(Img_MaxDims, hcal_hit, 4, i_image);
           size_t L2_index = flat_index(Img_MaxDims, hcal_hit, 5, i_image);
-          //Flat index for '4D' vector [events][images][variable][hit]
+          //Flat index for '3D' vector [images][variable][hit]
 
           image_data[E_index]  = (hcal_data[ichunk][0][ihit] - img_means[0])/img_stdevs[0];
           image_data[X_index]  = (hcal_data[ichunk][1][ihit] - img_means[1])/img_stdevs[1];
@@ -262,7 +258,7 @@ void create_calo_images(
           image_dataset.write(&image_data[0], H5::PredType::NATIVE_FLOAT,
               img_memory_space, img_file_space);
 
-          std::fill(image_data.begin(),image_data.end(),NAN);
+          std::fill(image_data.begin(),image_data.end(),Fill_Val);
 
           i_image = 0;
           img_offset[0] += chunk_events; 
@@ -288,8 +284,11 @@ void create_calo_images(
       ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
 
     }//event chunk if
+
     fprintf(stderr, "\r%s: %d: Getting Image Data Event %lu / %lu", __func__,__LINE__,ievt,N_Events );
+
   }//event
+
   fprintf(stderr, "\n%s: %d: Image Data Done \n", __func__,__LINE__ );
 
   return;
@@ -318,7 +317,6 @@ void get_mean_stdev(
   get_dims(hcal_dataset, calo_MaxDims);
   size_t N_Events = calo_MaxDims[0];
   size_t N_calo_vars = calo_MaxDims[1];
-  /* size_t N_calo_vars = 3; */
   size_t N_calo_hits = calo_MaxDims[2];
   hsize_t calo_chunk_dims[rank] = {chunk_events, N_calo_vars, N_calo_hits};
 
@@ -336,7 +334,6 @@ void get_mean_stdev(
 
   //--------------------Get Mean--------------------
   size_t hit_count = 0;
-  float test_mean = 0;
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
     fprintf(stderr, "\r%s: %d: Calculating Mean and Standard Deviation %lu / %lu",
         __func__,__LINE__,ievt,N_Events );
@@ -346,20 +343,19 @@ void get_mean_stdev(
     for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
       for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
 
-        //ECAL
+        //ECAL DATA
         for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
           if (isnan(ecal_data[ichunk][0][ihit])) break;
           img_means[0] += ecal_data[ichunk][0][ihit]; //E
           img_means[1] += ecal_data[ichunk][1][ihit]; //X
           img_means[2] += ecal_data[ichunk][2][ihit]; //Y
           img_means[3] += 1; //ecal_depth
-          test_mean +=1;
           img_means[4] += (z_offset+length_1);
           img_means[5] += (z_offset+length_1+length_2);
           hit_count++;
         }
 
-        //HCAL
+        //HCAL DATA
         for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
           if (isnan(hcal_data[ichunk][0][ihit])) break;
           if (isnan(hcal_data[ichunk][3][ihit])) break;
@@ -375,7 +371,6 @@ void get_mean_stdev(
           img_means[1] += hcal_data[ichunk][1][ihit]; 
           img_means[2] += hcal_data[ichunk][2][ihit]; 
           img_means[3] += hcal_depth;
-          test_mean += hcal_depth;
           img_means[4] += (z_offset+length_1);
           img_means[5] += (z_offset+length_1+length_2);
           hit_count++;
@@ -433,6 +428,7 @@ void get_mean_stdev(
           for (size_t iz = 0; iz < n_layers; iz++) 
             if ((hcal_z >= layer_boundaries[iz]) && (hcal_z < layer_boundaries[iz+1])) 
               img_stdevs[3] += pow((iz+2) - img_means[3], 2);
+          //FIXME: Use the depth function for better code standards
 
           img_stdevs[4] += pow(layer_boundaries[1] - img_means[4], 2);
           img_stdevs[5] += pow(layer_boundaries[2] - img_means[5], 2);
@@ -464,6 +460,7 @@ void get_mean_stdev(
 void create_truth_data(
     H5::DataSet mc_dataset,
     H5::DataSet truth_dataset,
+    float Fill_Val,
     size_t n_images)
 {
 
@@ -495,9 +492,10 @@ void create_truth_data(
   size_t N_Particles = mc_dims[2];
   size_t MaxDims[rank] = {N_Particles,n_variables,n_images};
 
-  std::vector<float> truth_data(chunk_events * n_variables * N_Particles, NAN);
+  std::vector<float> truth_data(chunk_events * n_variables * N_Particles, Fill_Val);
   hsize_t truth_offset[rank] = {0};
 
+  /* N_Events = 100; */
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
 
     size_t ichunk = ievt % chunk_events; 
@@ -519,15 +517,15 @@ void create_truth_data(
 
       //----------- Write new Truth Data ------------
       if (img_chunk == chunk_events-1){
-      H5::DataSpace truth_file_space = truth_dataset.getSpace();
-      truth_file_space.selectHyperslab(H5S_SELECT_SET,truth_dims, truth_offset);
-      H5::DataSpace truth_memory_space(rank, truth_dims, NULL);
+        H5::DataSpace truth_file_space = truth_dataset.getSpace();
+        truth_file_space.selectHyperslab(H5S_SELECT_SET,truth_dims, truth_offset);
+        H5::DataSpace truth_memory_space(rank, truth_dims, NULL);
 
-      truth_dataset.write(&truth_data[0], H5::PredType::NATIVE_FLOAT,
-          truth_memory_space, truth_file_space);
+        truth_dataset.write(&truth_data[0], H5::PredType::NATIVE_FLOAT,
+            truth_memory_space, truth_file_space);
 
-      truth_offset[0]+=chunk_events;
-      if (truth_offset[0] >= N_Events*n_images) break;
+        truth_offset[0]+=chunk_events;
+        if (truth_offset[0] >= N_Events*n_images) break;
 
       }
     }//image loop
@@ -535,7 +533,7 @@ void create_truth_data(
     if (ichunk == chunk_events-1){
       // Extended-by-1 dimension. First dim is event#
       mc_offset[0]+=chunk_events;
-      std::fill(truth_data.begin(),truth_data.end(),NAN);
+      std::fill(truth_data.begin(),truth_data.end(),Fill_Val);
 
       if (mc_offset[0] >= N_Events) break;
       mc_dataspace.selectHyperslab( H5S_SELECT_SET, read_dims, mc_offset );
@@ -590,12 +588,10 @@ int main(int argc, char *argv[]){
   size_t n_sgmnt_vars = 3;
 
   //Create new Image and Truth datasets
-
-  /* size_t rank = get_rank(hcal_dataset); */
   hsize_t truth_dims[rank] = {mc_dims[0]*n_images, n_truth_vars, n_particles_max};
   hsize_t img_dims[rank] = {calo_dims[0]*n_images, n_img_vars, calo_dims[2]*2}; //*2: hcal+ecal hits
 
-  const float FillVal = NAN;
+  const float FillVal = 0; //0 instead of NAN for easier regression
   add_dataset("truth", truth_dims, rank, image_file, FillVal);
   add_dataset("calo_images", img_dims, rank, image_file, FillVal);
 
@@ -612,16 +608,9 @@ int main(int argc, char *argv[]){
   //truth norm done in jupyter for convenience
 
   create_calo_images(hcal_dataset, ecal_dataset, 
-      image_dataset, n_images, img_means, img_stdevs, n_layers, z_offset,z_max);  
+      image_dataset, FillVal, n_images, img_means, img_stdevs, n_layers, z_offset,z_max);  
 
-  create_truth_data(mc_dataset, truth_dataset, n_images);
-
-  /* void create_truth_data( */
-  /*     H5::DataSet mc_dataset, */
-  /*     H5::DataSet truth_dataset, */
-  /*     hsize_t *mc_dims, */
-  /*     size_t n_images) */
-
+  create_truth_data(mc_dataset, truth_dataset, FillVal, n_images);
 
   return 0;
 }
