@@ -159,10 +159,10 @@ void write_data(
         if (hcalE[h_hit] <= 0.0001 ) continue; //Omit Empty Cells and MIPS
         if (hcalT[h_hit] > 200) continue; //cut long tails in time (realistic for EIC)
         
-        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max+ h_fill;
-        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max+ h_fill;
-        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max+ h_fill;
-        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max+ h_fill;
+        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + h_fill;
+        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max + h_fill;
+        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max + h_fill;
+        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + h_fill;
         //Index for flattened 3D vector
         
         hcal_data[E_index] = hcalE[h_hit] *1000;
@@ -188,10 +188,10 @@ void write_data(
         if (ecalE[e_hit] <= 0.0001 ) continue; 
         if (ecalT[e_hit] > 200 ) continue; 
 
-        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max+ e_fill;
-        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max+ e_fill;
-        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max+ e_fill;
-        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max+ e_fill;
+        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + e_fill;
+        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max + e_fill;
+        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max + e_fill;
+        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + e_fill;
         //Index for flattened 3D vector
         
         ecal_data[E_index] = ecalE[e_hit] *1000;
@@ -234,11 +234,14 @@ void write_data(
 
         mc_fill++;
       }// If sim/gun is working, each event should only have one particle with GenStatus = 1
+      if (mc_fill == 0) continue;
 
       bool print_hcal = false;
       bool print_mc = false;
 
-      if (iblock == (block_size-1)) {//writes 1 block (2000 events) at a time. Faster/less memory
+      if (iblock == (block_size-1)) 
+      {
+        //writes 1 block (100 events) at a time. Faster/less memory
 
         if (print_hcal){
           for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) {
@@ -284,15 +287,18 @@ void write_data(
 
         else { 
           // Extended-by-1 dimension. First dim is event#
-          const hsize_t hcal_dim_extended[RANK] = {
+          const hsize_t hcal_dim_extended[RANK] = 
+          {
             offset[0] + hcal_dim_extend[0], hcal_dim_extend[1], hcal_dim_extend[2]
           };
 
-          const hsize_t ecal_dim_extended[RANK] = {
+          const hsize_t ecal_dim_extended[RANK] = 
+          {
             offset[0] + ecal_dim_extend[0], ecal_dim_extend[1], ecal_dim_extend[2]
           };
 
-          const hsize_t mc_dim_extended[RANK] = {
+          const hsize_t mc_dim_extended[RANK] = 
+          {
             offset[0]  +  mc_dim_extend[0],   mc_dim_extend[1],   mc_dim_extend[2]
           };
 
