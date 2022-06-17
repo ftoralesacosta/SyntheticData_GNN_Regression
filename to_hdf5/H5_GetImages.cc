@@ -183,6 +183,7 @@ void create_calo_images(
   size_t Img_MaxDims[rank] = {N_img_hits, N_img_vars, chunk_events}; 
 
   //EVENT LOOP
+  /* N_Events = 30; */
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
 
     size_t ichunk = (ievt % chunk_events); //for reading calo 1 chunk at a time
@@ -491,7 +492,7 @@ void create_truth_data(
   std::vector<float> truth_data(chunk_events * n_variables * N_Particles, Fill_Val);
   hsize_t truth_offset[rank] = {0};
 
-  /* N_Events = 100; */
+  /* N_Events = 30; */
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
 
     size_t ichunk = ievt % chunk_events; 
@@ -570,6 +571,8 @@ int main(int argc, char *argv[]){
   H5::H5File image_file( new_hdf5_file, H5F_ACC_TRUNC );
 
   //Parameters for Images/layers, and dataset for training  
+  size_t N_Events = calo_dims[0];
+  /* N_Events = 30; */
 
   size_t n_truth_vars = 2; //Particle Energy and Theta 
   size_t n_particles_max = mc_dims[2];
@@ -584,8 +587,8 @@ int main(int argc, char *argv[]){
   size_t n_sgmnt_vars = 3;
 
   //Create new Image and Truth datasets
-  hsize_t truth_dims[rank] = {mc_dims[0]*n_images, n_truth_vars, n_particles_max};
-  hsize_t img_dims[rank] = {calo_dims[0]*n_images, n_img_vars, calo_dims[2]*2}; //*2: hcal+ecal hits
+  hsize_t truth_dims[rank] = {N_Events*n_images, n_truth_vars, n_particles_max};
+  hsize_t img_dims[rank] = {N_Events*n_images, n_img_vars, calo_dims[2]*2}; //*2: hcal+ecal hits
 
   const float FillVal = 0; //0 instead of NAN for easier regression
   add_dataset("truth", truth_dims, rank, image_file, FillVal);
