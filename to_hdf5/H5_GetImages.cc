@@ -183,15 +183,15 @@ void create_calo_images(
   size_t Img_MaxDims[rank] = {N_img_hits, N_img_vars, chunk_events}; 
 
   //EVENT LOOP
-  /* N_Events = 100; */
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
 
-    size_t ichunk = ievt % chunk_events; //for reading calo 1 chunk at a time
-    size_t i_image = 0;
+    size_t ichunk = (ievt % chunk_events); //for reading calo 1 chunk at a time
 
     //Layer Loop. Each Layer iteration is an image 
+    size_t image_count = 0;
     for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
       for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
+        size_t i_image = image_count % chunk_events;
 
         size_t layer_boundaries[n_layers+1] = 
         { z_offset, z_offset+length_1, 
@@ -244,8 +244,6 @@ void create_calo_images(
           image_data[L1_index] = (layer_boundaries[1] - img_means[4])/img_stdevs[4];
           image_data[L2_index] = (layer_boundaries[2] - img_means[5])/img_stdevs[5];
 
-
-
         }//HCal hit
 
         //write every 'chunk' number of images
@@ -260,13 +258,12 @@ void create_calo_images(
 
           std::fill(image_data.begin(),image_data.end(),Fill_Val);
 
-          i_image = 0;
           img_offset[0] += chunk_events; 
           if (img_offset[0] >= N_Events*n_images) break;
           //img dataset is incremented every 'chunk' number of Images
           //but it's total size is N_Events*n_images
         }
-        i_image++;
+        image_count++;//fencepost. Ater set to 0, is added +1
       }//layer 1
     }//layer 2
 
@@ -285,7 +282,7 @@ void create_calo_images(
 
     }//event chunk if
 
-    fprintf(stderr, "\r%s: %d: Getting Image Data Event %lu / %lu", __func__,__LINE__,ievt,N_Events );
+    fprintf(stderr, "\r%s: %d: Getting Image Data Event %lu / %lu", __func__,__LINE__,ievt,N_Events);
 
   }//event
 
@@ -451,8 +448,7 @@ void get_mean_stdev(
       img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count);
     else 
       img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count / n_images);
-    fprintf(stderr, "%s: %d: Mean for variable %llu = %1.2f \n", __func__, __LINE__, ivar, img_means[ivar]);
-    fprintf(stderr, "%s: %d: Stdev for variable %llu = %1.2f \n", __func__, __LINE__, ivar, img_stdevs[ivar]);
+    fprintf(stderr, "%s: %d: Variable %llu Mean = %1.2f StDev = %1.2f\n", __func__, __LINE__, ivar, img_means[ivar],img_stdevs[ivar]);
   }
 
 }
