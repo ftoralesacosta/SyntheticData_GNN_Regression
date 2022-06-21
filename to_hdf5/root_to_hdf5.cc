@@ -144,6 +144,7 @@ void write_data(
     int i = 0;
     while (events.Next()) {
 
+      if (i >= eventsN_max) break;
       int iblock = i % block_size;
       //writing to file is done every [block_size] number of events
       //this variable keeps track of the current increment within a block,
@@ -156,7 +157,7 @@ void write_data(
       for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) 
       {
         if (hcalE[h_hit] > 1e10) continue; //Omit spikey cells
-        if (hcalE[h_hit] <= 0.0001 ) continue; //Omit Empty Cells and MIPS
+        if (hcalE[h_hit] <= 0.00006 ) continue; //Omit Empty Cells and MIPS
         if (hcalT[h_hit] > 200) continue; //cut long tails in time (realistic for EIC)
         
         size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + h_fill;
@@ -185,7 +186,7 @@ void write_data(
       for (size_t e_hit = 0; e_hit < ecalNHits; e_hit++) 
       {
         if (ecalE[e_hit] > 1e10) continue;
-        if (ecalE[e_hit] <= 0.0001 ) continue; 
+        if (ecalE[e_hit] <= 0.00006 ) continue; 
         if (ecalT[e_hit] > 200 ) continue; 
 
         size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + e_fill;
@@ -377,6 +378,7 @@ int main(int argc, char *argv[]){
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
   find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
+  /* eventsN_max = 1000; */
   /* eventsN_max = 10000; calo_NHits_max = 1318*2; mcNParticles_max = 15; */ 
   //saved for rec_piplus_Energy_0-100GeV.root
 
