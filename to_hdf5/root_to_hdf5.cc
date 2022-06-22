@@ -111,11 +111,13 @@ void write_data(
 
     const char *calo_var[] = {"energy", "position.x", "position.y", "position.z"};
     TTreeReaderArray<Float_t> hcalE( events, Form("%s.energy",hcal_str));
+    TTreeReaderArray<Float_t> hcalT( events, Form("%s.time",hcal_str));
     TTreeReaderArray<Float_t> hcalX( events, Form("%s.position.x",hcal_str));
     TTreeReaderArray<Float_t> hcalY( events, Form("%s.position.y",hcal_str));
     TTreeReaderArray<Float_t> hcalZ( events, Form("%s.position.z",hcal_str));
 
     TTreeReaderArray<Float_t> ecalE( events, Form("%s.energy",ecal_str));
+    TTreeReaderArray<Float_t> ecalT( events, Form("%s.time",ecal_str));
     TTreeReaderArray<Float_t> ecalX( events, Form("%s.position.x",ecal_str));
     TTreeReaderArray<Float_t> ecalY( events, Form("%s.position.y",ecal_str));
     TTreeReaderArray<Float_t> ecalZ( events, Form("%s.position.z",ecal_str));
@@ -142,10 +144,12 @@ void write_data(
     int i = 0;
     while (events.Next()) {
 
+      if (i >= eventsN_max) break;
       int iblock = i % block_size;
       //writing to file is done every [block_size] number of events
       //this variable keeps track of the current increment within a block,
-      //as opposed to [i] which is looping through all events
+      //as opposed to [i] which is looping through all events. Note 'i' is 
+      //incremented only after an event passes selection (hit requirements)
 
       size_t h_fill = 0; //fill iff non-spikey cell found
       size_t hcalNHits = hcalE.GetSize();
@@ -153,26 +157,53 @@ void write_data(
       for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) 
       {
         if (hcalE[h_hit] > 1e10) continue; //Omit spikey cells
-        if ( hcalE[h_hit] <= 0 ) continue; //Omit Empty cells
-        hcal_data[(iblock*cal_row_size + 0)*calo_NHits_max + h_fill] = hcalE[h_hit] * 1000; //GeV->MeV
-        hcal_data[(iblock*cal_row_size + 1)*calo_NHits_max + h_fill] = hcalX[h_hit]; 
-        hcal_data[(iblock*cal_row_size + 2)*calo_NHits_max + h_fill] = hcalY[h_hit]; 
-        hcal_data[(iblock*cal_row_size + 3)*calo_NHits_max + h_fill] = hcalZ[h_hit]; //note: Z range is 3800-500cm for some reason
+        if (hcalE[h_hit] <= 0.00006 ) continue; //Omit Empty Cells and MIPS
+        if (hcalT[h_hit] > 200) continue; //cut long tails in time (realistic for EIC)
+        
+        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + h_fill;
+        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max + h_fill;
+        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max + h_fill;
+        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + h_fill;
+        //Index for flattened 3D vector
+        
+        hcal_data[E_index] = hcalE[h_hit] *1000;
+        hcal_data[X_index] = hcalX[h_hit]; 
+        hcal_data[Y_index] = hcalY[h_hit]; 
+        hcal_data[Z_index] = hcalZ[h_hit]; 
+
+        //OLD WAY
+        /* hcal_data[(iblock*cal_row_size + 1)*calo_NHits_max + h_fill] = hcalX[h_hit]; */ 
+
         h_fill++;
       }
+      if (hcalNHits == 0) continue; //skip events with no hcal hits
+      if (h_fill == 0) continue; //skip events hits passing selection
+
 
       size_t e_fill = 0;
       size_t ecalNHits = ecalE.GetSize();
+
       for (size_t e_hit = 0; e_hit < ecalNHits; e_hit++) 
       {
         if (ecalE[e_hit] > 1e10) continue;
-        if ( ecalE[e_hit] <= 0 ) continue; 
-        ecal_data[(iblock*cal_row_size + 0)*calo_NHits_max + e_fill] = ecalE[e_hit] * 1000; //GeV->MeV
-        ecal_data[(iblock*cal_row_size + 1)*calo_NHits_max + e_fill] = ecalX[e_hit]; 
-        ecal_data[(iblock*cal_row_size + 2)*calo_NHits_max + e_fill] = ecalY[e_hit]; 
-        ecal_data[(iblock*cal_row_size + 3)*calo_NHits_max + e_fill] = ecalZ[e_hit]; 
+        if (ecalE[e_hit] <= 0.00006 ) continue; 
+        if (ecalT[e_hit] > 200 ) continue; 
+
+        size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + e_fill;
+        size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max + e_fill;
+        size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max + e_fill;
+        size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + e_fill;
+        //Index for flattened 3D vector
+        
+        ecal_data[E_index] = ecalE[e_hit] *1000;
+        ecal_data[X_index] = ecalX[e_hit]; 
+        ecal_data[Y_index] = ecalY[e_hit]; 
+        ecal_data[Z_index] = ecalZ[e_hit]; 
+
         e_fill++;
       }
+      if (ecalNHits == 0) continue; //skip events with no hcal hits
+      if (e_fill == 0) continue; //skip events hits passing selection
 
       size_t mc_fill = 0;
       size_t mcNParticles = mcMass.GetSize();
@@ -185,23 +216,33 @@ void write_data(
         float mcP = hypot(mcPX[particle], mcPY[particle], mcPZ[particle]);
         float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
 
-        mc_data[(iblock*mc_row_size + 0)*mcNParticles + mc_fill] = mcPDG[particle]; 
-        mc_data[(iblock*mc_row_size + 1)*mcNParticles + mc_fill] = mcSimulatorStatus[particle]; 
-        mc_data[(iblock*mc_row_size + 2)*mcNParticles + mc_fill] = mcGeneratorStatus[particle]; 
-        mc_data[(iblock*mc_row_size + 3)*mcNParticles + mc_fill] = mcPX[particle]; 
-        mc_data[(iblock*mc_row_size + 4)*mcNParticles + mc_fill] = mcPY[particle]; 
-        mc_data[(iblock*mc_row_size + 5)*mcNParticles + mc_fill] = mcPZ[particle]; 
-        mc_data[(iblock*mc_row_size + 6)*mcNParticles + mc_fill] = mcMass[particle]; 
-        mc_data[(iblock*mc_row_size + 7)*mcNParticles + mc_fill] = mcPT; 
-        mc_data[(iblock*mc_row_size + 8)*mcNParticles + mc_fill] = mcP; 
-        mc_data[(iblock*mc_row_size + 9)*mcNParticles + mc_fill] = mcTheta; 
+        mc_data[(iblock*mc_row_size + 0)*mcNParticles_max + mc_fill] = mcPDG[particle]; 
+        mc_data[(iblock*mc_row_size + 1)*mcNParticles_max + mc_fill] = mcSimulatorStatus[particle]; 
+        mc_data[(iblock*mc_row_size + 2)*mcNParticles_max + mc_fill] = mcGeneratorStatus[particle]; 
+        mc_data[(iblock*mc_row_size + 3)*mcNParticles_max + mc_fill] = mcPX[particle]; 
+        mc_data[(iblock*mc_row_size + 4)*mcNParticles_max + mc_fill] = mcPY[particle]; 
+        mc_data[(iblock*mc_row_size + 5)*mcNParticles_max + mc_fill] = mcPZ[particle]; 
+        mc_data[(iblock*mc_row_size + 6)*mcNParticles_max + mc_fill] = mcMass[particle]; 
+        mc_data[(iblock*mc_row_size + 7)*mcNParticles_max + mc_fill] = mcPT; 
+        mc_data[(iblock*mc_row_size + 8)*mcNParticles_max + mc_fill] = mcP; 
+        mc_data[(iblock*mc_row_size + 9)*mcNParticles_max + mc_fill] = mcTheta; 
+
+        /* std::cout << " " << std::endl; */
+        /* for (size_t ivar = 0; ivar < mc_row_size; ivar++) { */
+        /*   std::cout << "index = " << (iblock*mc_row_size + ivar)*mcNParticles_max + mc_fill<< " / " << mc_data.size() << std::endl; */
+        /* } */
+        /* std::cout << " " << std::endl; */
+
         mc_fill++;
       }// If sim/gun is working, each event should only have one particle with GenStatus = 1
+      if (mc_fill == 0) continue;
 
       bool print_hcal = false;
       bool print_mc = false;
 
-      if (iblock == (block_size-1)) {//writes 1 block (2000 events) at a time. Faster/less memory
+      if (iblock == (block_size-1)) 
+      {
+        //writes 1 block (100 events) at a time. Faster/less memory
 
         if (print_hcal){
           for (size_t h_hit = 0; h_hit < hcalNHits; h_hit++) {
@@ -217,14 +258,14 @@ void write_data(
         }
 
         if (print_mc) {
-          for (size_t particle = 0; particle < mcNParticles; particle++) {
+          for (size_t particle = 0; particle < mcNParticles_max; particle++) {
             float Mass = mcMass[particle];
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Generator Status = " << mc_data[(iblock*mc_row_size + 2)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PX = " << mc_data[(iblock*mc_row_size + 3)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PY = " << mc_data[(iblock*mc_row_size + 4)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " PZ = " << mc_data[(iblock*mc_row_size + 5)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Theta = " << mc_data[(iblock*mc_row_size + 9)*mcNParticles +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles << " Momentum = " << mc_data[(iblock*mc_row_size + 8)*mcNParticles +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " GenStatus = "<<mc_data[(iblock*mc_row_size+2)*mcNParticles_max+particle]<<std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PX = " << mc_data[(iblock*mc_row_size + 3)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PY = " << mc_data[(iblock*mc_row_size + 4)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PZ = " << mc_data[(iblock*mc_row_size + 5)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " Theta = "<< mc_data[(iblock*mc_row_size+9)*mcNParticles_max +particle] << std::endl;
+            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " Momentum = "<< mc_data[(iblock*mc_row_size+8)*mcNParticles_max+particle]<<std::endl;
             std::cout << std::endl;
             break; //first index should be filled, followed by nans. rm this if want to see all particles
           }           
@@ -247,16 +288,19 @@ void write_data(
 
         else { 
           // Extended-by-1 dimension. First dim is event#
-          const hsize_t hcal_dim_extended[RANK] = {
+          const hsize_t hcal_dim_extended[RANK] = 
+          {
             offset[0] + hcal_dim_extend[0], hcal_dim_extend[1], hcal_dim_extend[2]
           };
 
-          const hsize_t ecal_dim_extended[RANK] = {
+          const hsize_t ecal_dim_extended[RANK] = 
+          {
             offset[0] + ecal_dim_extend[0], ecal_dim_extend[1], ecal_dim_extend[2]
           };
 
-          const hsize_t mc_dim_extended[RANK] = {
-            offset[0] + mc_dim_extend[0], mc_dim_extend[1], mc_dim_extend[2]
+          const hsize_t mc_dim_extended[RANK] = 
+          {
+            offset[0]  +  mc_dim_extend[0],   mc_dim_extend[1],   mc_dim_extend[2]
           };
 
           // Extend to the new dimension
@@ -327,14 +371,15 @@ int main(int argc, char *argv[]){
   size_t eventsN_max = 0;
   size_t calo_NHits_max = 0;
   size_t mcNParticles_max = 0;
-  size_t block_size = 1000; //affects chunk size, 
+  size_t block_size = 100; //affects chunk size, 
 
   //Constants for Layering HCal
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
   find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
-  /* eventsN_max = 10000; calo_NHits_max = 1318; calo_NHits_max = 1035; mcNParticles_max = 15; */ 
+  /* eventsN_max = 1000; */
+  /* eventsN_max = 10000; calo_NHits_max = 1318*2; mcNParticles_max = 15; */ 
   //saved for rec_piplus_Energy_0-100GeV.root
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
@@ -349,7 +394,7 @@ int main(int argc, char *argv[]){
   hsize_t mc_dim_extend[RANK] = {block_size, mc_row_size, mcNParticles_max};
 
   //Check the hyperslab/extension dimensions are correct
-  fprintf(stderr,"\n%s: %d: HDF5 Chunk Cache Size = %u\n",__func__,__LINE__,block_size);
+  fprintf(stderr,"\n%s: %d: HDF5 Chunk Size = %u\n",__func__,__LINE__,block_size);
   fprintf(stderr, "%s: %d: hcal_dim_extend = %u %u %u\n", 
       __func__, __LINE__, hcal_dim_extend[0],hcal_dim_extend[1],hcal_dim_extend[2]);
   fprintf(stderr, "%s: %d: ecal_dim_extend = %u %u %u\n", 

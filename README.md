@@ -1,18 +1,31 @@
 ### This Repo aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC Singularity container, as well as installing __specific__ commits of `Athena`, `reconstruction_benchmarks`, `ip6`, and `juggler` repositories. Lastly, it introduces HDF5 for the final data format.
 #### Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
 
-1. Download the EIC container
+###Update: Due to a breaking update and a lapse in versioning of the EIC image, we must use a backed up Singularity image hosted ourselves. Google Drive is the current solution.
+
 > ./get_eic-container.sh
+1. Setup the environment for loading the container
 
-This will download the container, enter the container, and create a few required directories for the next step. The download script will prompt you to run ./eic-shell to enter the container, but you should already be in the container. You'll know you're in the container when your prompt is prepended with `jug_xl>`. TLDR: after running ./get_eic-container, just run the command under Step 2.
+This will download the nightly container (which we no longer use) and creates a few required directories for the next step. It also sets various environment variables for using the container 
 
-2. Grab specific commits of the repositories mentioned above, builds them, and sets a handful of important environment variables
+2. Download the EIC singularity image from this [GDrive Link](https://drive.google.com/file/d/10WuqchbaVqLZthWtGjth2QMlSfEthw_t/view?usp=sharing)
+
+**Make sure the image is in the `eic` directorty.**
+If running on a headless machine, one can try using `gdown` package available through `pip`
+
+3. Enter the container downloaded in Step 2  
+> ./enter_container.sh
+
+The enter_container script importantly specifies the container to use before running the `./eic-shell` command.
+One can set this environment variable themselves with `export SIF=$PWD/working_image.sif`.
+
+4. Grab specific commits of the repositories mentioned above, builds them, and sets a handful of important environment variables
 > source get_frameworks.sh
 
 This downloads the specific commits used to generate data. It builds them and and then sources the setup_env.sh script to set a handful of important environment variables inside the container.
 Make sure you're still in the container when running this.
 
-3. Try the simulation
+5. Try the simulation
 > bash benchmarks/clustering/full_cal_clusters.sh -p "pion+" -n 100 --pmin 19.99 --pmax 20.01 -t pionplus_20Gev_test
 
 Also make sure to still be in the container when running this.
@@ -39,13 +52,21 @@ List of particles for the particle gun are found in /eic/athena/reconstruction_b
     "muon+": (-13, 0.1056583),         # muon+  
 
 4. Download and install HDF5
-While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script.
+While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script. Then run the next two commands to compile the code.
 > make root_to_hdf5
 
 > ./root_to_hdf5 [input root file] [new_hdf5_file.hdf5]
 
 ### Once setup
 To re-enter the container, one just need to run two commands:
-> ./eic-shell
+> ./enter_container.sh
 
 > source setup_env.sh
+
+
+### Note and Editing
+Most of the frameworks should not be edited, with the exception of the reconstruction `reconstruction_benchmarks` repository. We are using a branch specifically for the ai_codesign project, and changes to the particle gun as well as changes to the structure of the output root file can be done by editing the python files in that repository.
+
+### To Do:
+1. Look into https://cloud.sylabs.io/library for hosting the image. Ideally, something that supports the `Singularity pull` command would be best for easy scripting.
+2. Script the generation together with the HDF5 conversion for batch jobs
