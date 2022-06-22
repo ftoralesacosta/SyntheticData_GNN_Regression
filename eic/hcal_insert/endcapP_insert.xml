@@ -1,0 +1,11 @@
+<lccdd>
+ <define>
+   <include ref="configuration_default.xml"/>
+ </define>
+ 
+ 
+ <comment> Including the pEndcap insert </comment>
+ <include ref="pECalInsert.xml"/>
+ <include ref="pHCalInsert.xml"/>
+ 
+</lccdd>
