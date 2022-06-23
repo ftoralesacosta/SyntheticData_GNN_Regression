@@ -32,7 +32,7 @@ The data in the resulting `image hdf5 file` are in `calo_images` and `truth` dat
 
 | Truth   |          |
 |:-------:|:--------:|
-|Truth $E$| $\theta$ |
+|Truth $E$| Truth $\theta$ |
 |    0    |     1    |
 
 __Tip:__ The H5_hitQA notebook is run on the event_hdf5_files, while the H5_TowardsCodesign notebook is run on the image_hdf5_files.
