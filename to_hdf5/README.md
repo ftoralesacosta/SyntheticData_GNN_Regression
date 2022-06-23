@@ -8,8 +8,8 @@ The data of the resulting `event hdf5 file` are containde in `mc`, `hcal` and `e
 
 |     |                    |  Generator Data:  |      |       |       |      |       |     |          |
 |:---:|:------------------:|:-----------------:|:----:|:-----:|:-----:|:----:|:-----:|:---:|:--------:|
-| PDG | mcSimulatorStatus | mcGeneratorStatus | $P_X$ | $P_Y$ | $P_Z$ | Mass | $P_T$ | $P$ | $\theta$ |
-| 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| PDG | mcSimulatorStatus  | mcGeneratorStatus | $P_X$| $P_Y$ | $P_Z$ | Mass | $P_T$ | $P$ | $\theta$ |
+|  0  |         1         |          2         |   3  |   4   |   5   |   6  |   7   |  8  |    9     |
 
 |        | ECal:  |        |        |     |        | HCal:  |        |        |
 |--------|--------|--------|--------|-----|--------|--------|--------|--------|
