@@ -401,6 +401,7 @@ void get_mean_stdev(
       if (isnan(ecal_data[ichunk][0][ihit])) break;
       for (size_t ivar = 0; ivar < N_calo_vars; ivar++)
         img_stdevs[ivar] += pow(ecal_data[ichunk][ivar][ihit] - img_means[ivar], 2);
+      
       for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
         for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
           img_stdevs[3] += pow(1 - img_means[3], 2); //ecal_depth
@@ -418,16 +419,10 @@ void get_mean_stdev(
       for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
         for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
 
-          size_t layer_boundaries[n_layers+1] = 
-          { z_offset, z_offset+length_1, 
-            z_offset+length_1+length_2, z_max };
-
           float hcal_z = hcal_data[ichunk][3][ihit];
-          for (size_t iz = 0; iz < n_layers; iz++) 
-            if ((hcal_z >= layer_boundaries[iz]) && (hcal_z < layer_boundaries[iz+1])) 
-              img_stdevs[3] += pow((iz+2) - img_means[3], 2);
-          //FIXME: Use the depth function for better code standards
+          size_t hcal_depth = get_depth(hcal_z,z_offset,length_1,length_2,z_max);
 
+          img_stdevs[3] += pow(hcal_depth - img_means[3], 2);
           img_stdevs[4] += pow(layer_boundaries[1] - img_means[4], 2);
           img_stdevs[5] += pow(layer_boundaries[2] - img_means[5], 2);
         }
