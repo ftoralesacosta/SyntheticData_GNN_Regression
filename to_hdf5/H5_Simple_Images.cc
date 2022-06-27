@@ -497,6 +497,7 @@ int main(int argc, char *argv[]){
   H5::H5File image_file( new_hdf5_file, H5F_ACC_TRUNC );
 
   bool use_ecal = true;
+
   size_t N_Events = calo_dims[0];
   /* N_Events = 100; //For testing */
 
