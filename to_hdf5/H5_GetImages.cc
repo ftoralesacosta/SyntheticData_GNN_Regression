@@ -423,8 +423,8 @@ void get_mean_stdev(
           size_t hcal_depth = get_depth(hcal_z,z_offset,length_1,length_2,z_max);
 
           img_stdevs[3] += pow(hcal_depth - img_means[3], 2);
-          img_stdevs[4] += pow(layer_boundaries[1] - img_means[4], 2);
-          img_stdevs[5] += pow(layer_boundaries[2] - img_means[5], 2);
+          img_stdevs[4] += pow(z_offset+length_1 - img_means[4], 2);
+          img_stdevs[5] += pow(z_offset+length_1+length_2 - img_means[5], 2);
         }
       }
     }
@@ -443,7 +443,7 @@ void get_mean_stdev(
     if (ivar <= 2)
       img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count);
     else 
-      img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count / n_images);
+      img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count / n_images);//for hcal layering vars
     fprintf(stderr, "%s: %d: Variable %llu Mean = %1.2f StDev = %1.2f\n", __func__, __LINE__, ivar, img_means[ivar],img_stdevs[ivar]);
   }
 
