@@ -25,6 +25,8 @@ One can set this environment variable themselves with `export SIF=$PWD/working_i
 This downloads the specific commits used to generate data. It builds them and and then sources the setup_env.sh script to set a handful of important environment variables inside the container.
 Make sure you're still in the container when running this.
 
+__note:__ The reconstruction benchomarks is a separate branch, rather than a specific commit like the other frameworks. It is the [ai_codesign](https://eicweb.phy.anl.gov/EIC/benchmarks/reconstruction_benchmarks/-/tree/ai_codesign) branch. The script automatically checks this branch out.
+
 5. Try the simulation
 > bash benchmarks/clustering/full_cal_clusters.sh -p "pion+" -n 100 --pmin 19.99 --pmax 20.01 -t pionplus_20Gev_test
 
