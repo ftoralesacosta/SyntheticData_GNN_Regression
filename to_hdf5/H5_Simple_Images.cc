@@ -134,11 +134,13 @@ void create_calo_images(
   //Selection in file and memory. Read First Chunk
   hsize_t calo_offset[rank] = {0,0,0}; //offset is incremented in event loop
   hcal_dataspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
-  ecal_dataspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
   H5::DataSpace calo_memspace(rank, calo_chunk_dims );
   calo_memspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
   hcal_dataset.read( hcal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, hcal_dataspace);
-  ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
+  if (use_ecal) {
+    ecal_dataspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
+    ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
+  }
 
   hsize_t img_offset[rank] = {0,0,0};
   std::vector<float>image_data( chunk_events* N_img_vars * N_img_hits, Fill_Val);
@@ -252,12 +254,13 @@ void get_mean_stdev(
   //Selection in file and memory. Read First Chunk
   hsize_t calo_offset[rank] = {0,0,0}; //offset is incremented in event loop
   hcal_dataspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
-  ecal_dataspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
   H5::DataSpace calo_memspace(rank, calo_chunk_dims );
   calo_memspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
   hcal_dataset.read( hcal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, hcal_dataspace);
-  if (use_ecal)
+  if (use_ecal) {
+    ecal_dataspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
     ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
+  }
 
   //--------------------Get Mean--------------------
   size_t hit_count = 0;
