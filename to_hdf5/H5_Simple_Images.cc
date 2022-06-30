@@ -53,40 +53,6 @@ size_t flat_index(
   return index;
 }//gets index for flattend array, up to 3D
 
-size_t get_depth(
-    float hcal_z,
-    size_t z_offset,
-    size_t length_1,
-    size_t length_2,
-    size_t z_max,
-    size_t n_layers=3,
-    size_t index_offset=2)
-{//index offset for stacking ecal and hcal depths
-  
-  size_t layer_boundaries[n_layers+1] = 
-  {
-    z_offset, 
-    z_offset+length_1, 
-    z_offset+length_1+length_2,
-    z_max 
-  }; // 4 'edges' defining 3 hcal layers.
-
-  size_t depth;
-  for (size_t iz = 0; iz < n_layers; iz++) {
-    if ((hcal_z >= layer_boundaries[iz]) && (hcal_z < layer_boundaries[iz+1])) 
-    {
-      depth = iz+index_offset; 
-
-      //Useful debugg print
-      /* fprintf(stderr, "%s %d: iz=%llu depth=%llu, z=%1.2f %llu<->%llu [mm]\n", */
-      /*     __func__,__LINE__,iz, depth, hcal_z, layer_boundaries[iz],layer_boundaries[iz+1]); */
-
-    }
-  }
-
-  return depth;
-}
-
 void add_dataset(
     const char *dset_name,
     hsize_t *dims,
@@ -290,7 +256,8 @@ void get_mean_stdev(
   H5::DataSpace calo_memspace(rank, calo_chunk_dims );
   calo_memspace.selectHyperslab( H5S_SELECT_SET, calo_chunk_dims, calo_offset );
   hcal_dataset.read( hcal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, hcal_dataspace);
-  ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
+  if (use_ecal)
+    ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
 
   //--------------------Get Mean--------------------
   size_t hit_count = 0;
