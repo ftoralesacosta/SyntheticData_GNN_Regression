@@ -172,6 +172,19 @@ void create_calo_images(
         image_data[X_index] = (ecal_data[ichunk][1][ihit] - img_means[1])/img_stdevs[1];
         image_data[Y_index] = (ecal_data[ichunk][2][ihit] - img_means[2])/img_stdevs[2];
         image_data[Z_index] = (ecal_data[ichunk][3][ihit] - img_means[3])/img_stdevs[3];
+
+        if (ievt %1000000 == 0)
+          if (ihit %1000000 == 0) 
+          {
+            fprintf(stderr, "%s %d:E %1.3f -> %1.3f\n",__func__,__LINE__
+                ,ecal_data[ichunk][1][ihit],image_data[X_index]);
+            std::cout << "mean stdev X"<<img_means[1] <<" "
+              <<img_stdevs[1]<< "m/s = " <<img_means[1]/img_stdevs[1] << std::endl;
+            fprintf(stderr, "%s %d:X %1.3f -> %1.3f\n",__func__,__LINE__
+                ,ecal_data[ichunk][1][ihit],image_data[X_index]);
+            fprintf(stderr, "%s %d:Y %1.3f -> %1.3f\n",__func__,__LINE__
+                ,ecal_data[ichunk][2][ihit],image_data[Y_index]);
+          }
         ecal_hit_count++;
       }
     }//use_ecal if
@@ -275,10 +288,13 @@ void get_mean_stdev(
     ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
   }
 
-  //--------------------Get Mean--------------------
+  //--------------------------------------------------------------
+  //-------------------------Get Mean-----------------------------
+  //--------------------------------------------------------------
+
   size_t hit_count = 0;
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
-    fprintf(stderr, "\r%s: %d: Calculating Mean and Standard Deviation %lu / %lu",
+    fprintf(stderr, "\r%s: %d: Calculating Mean %lu / %lu",
         __func__,__LINE__,ievt,N_Events );
 
     size_t ichunk = ievt%chunk_events;
@@ -287,6 +303,7 @@ void get_mean_stdev(
     if (use_ecal){
       for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
         if (isnan(ecal_data[ichunk][0][ihit])) break;
+        if (isnan(ecal_data[ichunk][3][ihit])) break;
         img_means[0] += ecal_data[ichunk][0][ihit]; //E
         img_means[1] += ecal_data[ichunk][1][ihit]; //X
         img_means[2] += ecal_data[ichunk][2][ihit]; //Y
@@ -334,16 +351,28 @@ void get_mean_stdev(
   for (size_t ivar = 0; ivar < N_img_vars; ivar++)
     img_means[ivar] = img_means[ivar] / hit_count; //sum / N
 
+
+  //--------------------------------------------------------------
   //--------------------Get Standard Deviation--------------------
+  //--------------------------------------------------------------
+
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
+    fprintf(stderr, "\r%s: %d: Calculating StDev %lu / %lu",
+        __func__,__LINE__,ievt,N_Events );
     size_t ichunk = ievt%chunk_events;
 
     //ecal
     if (use_ecal){
       for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
         if (isnan(ecal_data[ichunk][0][ihit])) break;
-        for (size_t ivar = 0; ivar < N_calo_vars; ivar++)
+        if (isnan(ecal_data[ichunk][3][ihit])) break;
+        for (size_t ivar = 0; ivar < N_calo_vars; ivar++){
           img_stdevs[ivar] += pow(ecal_data[ichunk][ivar][ihit] - img_means[ivar], 2);
+          std::cout << "Val = "<< ecal_data[ichunk][ivar][ihit] << std::endl;
+          std::cout << "Mean = " << img_means[ivar] << std::endl;
+          std::cout << "ecal sdev calc = "<< 
+            pow(ecal_data[ichunk][ivar][ihit] - img_means[ivar], 2) << std::endl;
+        }
       }
     }
 
@@ -351,9 +380,15 @@ void get_mean_stdev(
     if (use_hcal){
       for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
         if (isnan(hcal_data[ichunk][0][ihit])) break;
-        for (size_t ivar = 0; ivar < N_calo_vars; ivar++)
-          img_stdevs[ivar] += pow(hcal_data[ichunk][ivar][ihit] - img_means[ivar], 2);
+        if (isnan(hcal_data[ichunk][3][ihit])) break;
 
+        for (size_t ivar = 0; ivar < N_calo_vars; ivar++){
+          img_stdevs[ivar] += pow(hcal_data[ichunk][ivar][ihit] - img_means[ivar], 2);
+          std::cout << "Val = "<< hcal_data[ichunk][ivar][ihit] << std::endl;
+          std::cout << "Mean = " << img_means[ivar] << std::endl;
+          std::cout << "hcal sdev calc = "<< 
+            pow(hcal_data[ichunk][ivar][ihit] - img_means[ivar], 2) << std::endl;
+        }
       }
     }
 
@@ -489,11 +524,12 @@ int main(int argc, char *argv[]){
   H5::H5File image_file( new_hdf5_file, H5F_ACC_TRUNC );
 
   bool use_ecal = true;
-  bool use_hcal = false;
+  bool use_hcal = true;
   fprintf(stderr, "%d %s: use Hcal = %s \n",__LINE__,__func__,use_hcal ? "TRUE" : "FALSE");
   fprintf(stderr, "%d %s: use Ecal = %s \n",__LINE__,__func__,use_ecal ? "TRUE" : "FALSE");
 
   size_t N_Events = calo_dims[0];
+  /* N_Events = 10000; */
   /* N_Events = 100; //For testing */
 
   size_t n_truth_vars = 2; //Particle Energy and Theta 
@@ -516,10 +552,17 @@ int main(int argc, char *argv[]){
 
   //Get Mean and Stdev for each variable
   double img_means[n_img_vars] = {0};
-  double img_stdevs[n_img_vars] = {0};
+  double img_stdevs[n_img_vars] = {1};
+  for (size_t i = 0; i < n_img_vars; i++)
+    img_stdevs[i] = 1.;
 
-  get_mean_stdev(img_means, img_stdevs, hcal_dataset, 
-      ecal_dataset, use_ecal, use_hcal, n_img_vars);
+  bool do_norm = false;
+
+  if (do_norm){
+    img_stdevs[n_img_vars] = {0};
+    get_mean_stdev(img_means, img_stdevs, hcal_dataset, 
+        ecal_dataset, use_ecal, use_hcal, n_img_vars);
+  }
   //image norm done here for performance
   //truth norm done in jupyter for convenience
 
