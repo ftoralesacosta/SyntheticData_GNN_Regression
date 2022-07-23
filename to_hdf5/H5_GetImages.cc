@@ -330,7 +330,11 @@ void get_mean_stdev(
   hcal_dataset.read( hcal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, hcal_dataspace);
   ecal_dataset.read( ecal_data, H5::PredType::NATIVE_FLOAT, calo_memspace, ecal_dataspace);
 
+
+  //--------------------------------------------------------------
   //--------------------Get Mean--------------------
+  //--------------------------------------------------------------
+
   size_t hit_count = 0;
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
     fprintf(stderr, "\r%s: %d: Calculating Mean and Standard Deviation %lu / %lu",
@@ -361,10 +365,6 @@ void get_mean_stdev(
           float hcal_z = hcal_data[ichunk][3][ihit];
           size_t hcal_depth = get_depth(hcal_z,z_offset,length_1,length_2,z_max);
 
-          /* for (size_t ivar = 0; ivar < N_calo_vars; ivar++) { */
-          /*   fprintf(stderr, "%s %d: %llu %1.2f\n",__func__,__LINE__,ivar,hcal_data[ichunk][ivar][ihit]); */
-          /* } */
-
           img_means[0] += hcal_data[ichunk][0][ihit]; 
           img_means[1] += hcal_data[ichunk][1][ihit]; 
           img_means[2] += hcal_data[ichunk][2][ihit]; 
@@ -393,41 +393,51 @@ void get_mean_stdev(
   for (size_t ivar = 0; ivar < N_img_vars; ivar++)
     img_means[ivar] = img_means[ivar] / hit_count; //sum / N
 
+
+  //--------------------------------------------------------------
   //--------------------Get Standard Deviation--------------------
+  //--------------------------------------------------------------
+
+  hit_count = 0;
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
     size_t ichunk = ievt%chunk_events;
-    //ecal
-    for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
-      if (isnan(ecal_data[ichunk][0][ihit])) break;
-      for (size_t ivar = 0; ivar < N_calo_vars; ivar++)
-        img_stdevs[ivar] += pow(ecal_data[ichunk][ivar][ihit] - img_means[ivar], 2);
-      
-      for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
-        for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
+
+    for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
+      for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
+
+        //ecal
+        for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
+          if (isnan(ecal_data[ichunk][0][ihit])) break;
+          if (isnan(ecal_data[ichunk][3][ihit])) break;
+
+          img_stdevs[0] += pow(ecal_data[ichunk][0][ihit] - img_means[0], 2);
+          img_stdevs[1] += pow(ecal_data[ichunk][1][ihit] - img_means[1], 2);
+          img_stdevs[2] += pow(ecal_data[ichunk][2][ihit] - img_means[2], 2);
           img_stdevs[3] += pow(1 - img_means[3], 2); //ecal_depth
           img_stdevs[4] += pow((z_offset+length_1) - img_means[4], 2);
           img_stdevs[5] += pow((z_offset+length_1+length_2) - img_means[5], 2);
+          hit_count++;
         }
-      }
-    }
-    //hcal
-    for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
-      if (isnan(hcal_data[ichunk][0][ihit])) break;
-      for (size_t ivar = 0; ivar < N_calo_vars; ivar++)
-        img_stdevs[ivar] += pow(hcal_data[ichunk][ivar][ihit] - img_means[ivar], 2);
 
-      for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
-        for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
+        //hcal
+        for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
+          if (isnan(hcal_data[ichunk][0][ihit])) break;
 
           float hcal_z = hcal_data[ichunk][3][ihit];
           size_t hcal_depth = get_depth(hcal_z,z_offset,length_1,length_2,z_max);
 
+          img_stdevs[0] += pow(hcal_data[ichunk][0][ihit] - img_means[0], 2);
+          img_stdevs[1] += pow(hcal_data[ichunk][1][ihit] - img_means[1], 2);
+          img_stdevs[2] += pow(hcal_data[ichunk][2][ihit] - img_means[2], 2);
           img_stdevs[3] += pow(hcal_depth - img_means[3], 2);
           img_stdevs[4] += pow(z_offset+length_1 - img_means[4], 2);
           img_stdevs[5] += pow(z_offset+length_1+length_2 - img_means[5], 2);
+          hit_count++;
         }
-      }
-    }
+
+      }//L1
+    }//L2
+
     //Read in next chunk
     if (ichunk == chunk_events-1) {
       calo_offset[0] += chunk_events; 
@@ -440,10 +450,10 @@ void get_mean_stdev(
   }
 
   for (size_t ivar = 0; ivar < N_img_vars; ivar++){
-    if (ivar <= 2)
+    /* if (ivar <= 2) */
       img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count);
-    else 
-      img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count / n_images);//for hcal layering vars
+    /* else */ 
+    /*   img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count / n_images);//for hcal layering vars */
     fprintf(stderr, "%s: %d: Variable %llu Mean = %1.2f StDev = %1.2f\n", __func__, __LINE__, ivar, img_means[ivar],img_stdevs[ivar]);
   }
 
