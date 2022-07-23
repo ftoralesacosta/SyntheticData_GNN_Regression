@@ -337,7 +337,8 @@ void get_mean_stdev(
 
   size_t hit_count = 0;
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
-    fprintf(stderr, "\r%s: %d: Calculating Mean and Standard Deviation %lu / %lu",
+
+    fprintf(stderr, "\r%s: %d: Calculating Mean %lu / %lu",
         __func__,__LINE__,ievt,N_Events );
 
     size_t ichunk = ievt%chunk_events;
@@ -348,6 +349,8 @@ void get_mean_stdev(
         //ECAL DATA
         for (size_t ihit = 0; ihit < N_calo_hits; ihit++) {
           if (isnan(ecal_data[ichunk][0][ihit])) break;
+          if (isnan(ecal_data[ichunk][3][ihit])) break;
+
           img_means[0] += ecal_data[ichunk][0][ihit]; //E
           img_means[1] += ecal_data[ichunk][1][ihit]; //X
           img_means[2] += ecal_data[ichunk][2][ihit]; //Y
@@ -400,8 +403,11 @@ void get_mean_stdev(
 
   hit_count = 0;
   for (size_t ievt = 0; ievt < N_Events; ievt++) {
-    size_t ichunk = ievt%chunk_events;
 
+    fprintf(stderr, "\r%s: %d: Calculating Standard Deviation %lu / %lu",
+        __func__,__LINE__,ievt,N_Events );
+
+    size_t ichunk = ievt%chunk_events;
     for (size_t length_1 = layer_start; length_1 < layer_max; length_1 += z_step) {
       for (size_t length_2 = layer_start; length_2 < layer_max; length_2 += z_step) {
 
@@ -450,10 +456,7 @@ void get_mean_stdev(
   }
 
   for (size_t ivar = 0; ivar < N_img_vars; ivar++){
-    /* if (ivar <= 2) */
-      img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count);
-    /* else */ 
-    /*   img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count / n_images);//for hcal layering vars */
+    img_stdevs[ivar] = std::sqrt(img_stdevs[ivar] / hit_count);
     fprintf(stderr, "%s: %d: Variable %llu Mean = %1.2f StDev = %1.2f\n", __func__, __LINE__, ivar, img_means[ivar],img_stdevs[ivar]);
   }
 
