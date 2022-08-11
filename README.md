@@ -11,7 +11,7 @@ This will download the nightly container (which we no longer use) and creates a 
 2. Download the EIC singularity image from this [GDrive Link](https://drive.google.com/file/d/10WuqchbaVqLZthWtGjth2QMlSfEthw_t/view?usp=sharing)
 
 **Make sure the image is in the `eic` directorty.**
-If running on a headless machine, one can try using `gdown` package available through `pip`
+If running on a headless machine, one can try using `gdown` package available through `pip`, e.g.  ```gdown 10WuqchbaVqLZthWtGjth2QMlSfEthw_t```
 
 3. Enter the container downloaded in Step 2  
 > ./enter_container.sh
