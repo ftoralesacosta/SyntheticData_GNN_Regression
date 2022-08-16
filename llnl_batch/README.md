@@ -26,8 +26,8 @@ An example for user ftorales on LLNL login is:
 This edit sets the full path to the image, such that the batch scripts can be run in pretty much any directory, run well, and save the output to the correct directory.
 
 ## To Submit the jobs
-This command __s__ubmits __n__=10 subjobs to the batch system launches dependant 
-__m__erge job to add all the root files together:
+This command **s**ubmits **n**=10 subjobs to the batch system launches dependant 
+**m**erge job to add all the root files together:
 > ./slurm-example.py -j [job name] -s -m -n 10 
 
 ### TODO:
