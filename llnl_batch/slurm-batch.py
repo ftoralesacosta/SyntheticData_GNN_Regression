@@ -33,6 +33,17 @@ parser.add_argument('-m', '--merge',action='store_true',
                     help='submit separate merge job with dependencies on this one')
 parser.add_argument('-v', '--verbose',action='store_true',
                     help='turn on diagnostic print statements')
+parser.add_argument('-ne', '--nevents',type=str,default='1000',
+                    help='number of events to run per subjob')
+parser.add_argument('-p', '--particle',type=str,default='pion+',
+                    help='particle species: pion+, pion-, pion0, muon+, muon-, etc')
+parser.add_argument('-pmin', '--pmin',type=str,default='0.0',
+                    help='minimum generated momentum')
+parser.add_argument('-pmax', '--pmax',type=str,default='100.0',
+                    help='maximum generated momentum')
+parser.add_argument('-l', '--label',type=str,default='test_job',
+                    help='label label generated job script, same for subjobs')
+
 
 # parser.add_argument('-c', '--config',type=str,default='configuration-1',
 #                     help='base for config files')
@@ -45,7 +56,8 @@ if not os.path.isdir(args.dir):
 
 #parameters for this example
 bank='mlodd'
-subjob_script='run-subjob.sh'
+# subjob_script='run-subjob.sh'
+subjob_script='run_gun.sh'
 merge_script='run-merge.sh'
 # time_est_subjob='00:10:00' #ten hours
 # time_est_merge='00:02:00' #two hours
@@ -117,6 +129,7 @@ f.write('#SBATCH --array=0-%d\n' % (args.njob-1))
 f.write('#SBATCH -o %s%s.%s.out\n' % (os.path.join(submit_dir,'log/'),'%A','%a')) 
 f.write('#SBATCH -e %s%s.%s.err\n' % (os.path.join(submit_dir,'log/'),'%A','%a'))
 f.write('%s/%s %s' % (submit_dir,subjob_script,submit_dir))
+f.write('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.label,args.pmin,args.pmax))
 f.close()
 
 #Further example, replace the last f.write(...) with the following to additionally pass config to subjob_script
@@ -130,6 +143,9 @@ if (args.submit):
     submit_command = 'sbatch ' + batchfile
     print (submit_command)
     os.system(submit_command)
+else:
+    print('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.label,args.pmin,args.pmax))
+    os.system('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.label,args.pmin,args.pmax))
 
 #Now optionally create job script for merge job and possibly submit
 if ( args.merge ):
