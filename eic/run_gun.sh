@@ -1,24 +1,86 @@
 #!/bin/bash
 
-EIC_DIR=/p/lustre2/ftorales/generate_data/eic
-# EIC_DIR=$PWD
+export EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
+export SIF=${EIC_DIR}/working_image.sif
 
-source /opt/detector/setup.sh                                                                          
+function print_the_help {
+  echo "USAGE: ${0} -n <nevents> -t <nametag> -p <particle> "
+  echo "  OPTIONS: "
+  echo "    -n,--nevents     Number of events"
+  echo "    -t,--nametag     name tag"
+  echo "    -p,--particle    particle type"
+  echo "    --pmin           minimum particle momentum (GeV)"
+  echo "    --pmax           maximum particle momentum (GeV)"
+  echo "                     allowed types: pion0, pion+, pion-, kaon0, kaon+, kaon-, proton, neutron, electron, positron, photon"
+  exit
+}
 
-PARTICLE=$1
-export LD_LIBRARY_PATH=$EIC_DIR/development/lib:$LD_LIBRARY_PATH                                           
-export PATH=$EIC_DIR/development/bin:$PATH                                                                 
-export DETECTOR_PATH=$EIC_DIR/athena                                                                       
-export JUGGLER_DETECTOR=athena                                                                         
-export JUGGLER_INSTALL_PREFIX=$EIC_DIR/development                                                         
-                                                                                                       
-#HDF5                                                                                                  
-export HDF5_DIR=${EIC_DIR}/../to_hdf5/hdf5-1.8.22/hdf5                                                     
-export PATH=$PATH:${HDF5_DIR}/bin                                                                      
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HDF5_DIR}/lib                                                
+POSITIONAL=()
+while [[ $# -gt 0 ]] 
+do
+  key="$1"
+  case ${key} in
+    -h|--help)
+      shift # past argument
+      print_the_help
+      ;;
+    -j|--makejob)
+      export FILENAME="$2"
+      shift #past argument
+      shift #past value
+      ;;
+    -t|--nametage)
+      export G4FILENAME="$2"
+      shift #past argument
+      shift #past value
+      ;;
+    -p|--particle)
+      export PARTICLE="$2"
+      shift #past argument
+      shift #past value
+      ;;
+    -n|--nevents)
+      export NEVENTS="$2"
+      shift #past argument
+      shift #past value
+      ;;
+    --pmin)
+      export PMIN="$2"
+      shift #past argument
+      shift #past value
+      ;;
+    --pmax)
+      export PMAX="$2"
+      shift #past argument
+      shift #past value
+      ;;
+    *)    # unknown option
+      #POSITIONAL+=("$1") # save it in an array for later
+      echo "unknown option $2"
+      print_the_help
+      shift # past argument
+      break
+      ;;
+  esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
 
-cd $EIC_DIR/reconstruction_benchmarks/
-pwd
-bash benchmarks/clustering/full_cal_clusters.sh -p pion+ -n 1 --pmin 0.0 --pmax 100. -t piplus_out
+#================================================
+# Create file to execute upon entering eic-shell
+#================================================
+#Make sure that similar file does not exist to avoid complications
+if [ -f "${FILENAME}" ]; then
+    echo "${FILENAME} exists and will be removed..."
+    rm "${FILENAME}"
+fi
 
-
+echo "#!/bin/bash" > ${FILENAME}
+echo -en "\n" >> ${FILENAME}
+echo "source ${EIC_DIR}/setup_env.sh"  >> ${FILENAME}
+echo "cd ${EIC_DIR}/reconstruction_benchmarks"  >> ${FILENAME}
+echo -en "\n" >> ${FILENAME}
+echo "The current directory is as follows: $(pwd)"  >> ${FILENAME}
+echo -en "\n" >> ${FILENAME}
+echo "bash benchmarks/clustering/full_cal_clusters.sh -p \"${PARTICLE}\" -n ${NEVENTS} --pmin ${PMIN} --pmax ${PMAX} -t ${G4FILENAME}"  >> ${FILENAME}
+chmod 700 ${FILENAME}
+bash eic-shell -- ./${FILENAME}
