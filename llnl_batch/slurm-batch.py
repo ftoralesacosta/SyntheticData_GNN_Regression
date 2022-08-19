@@ -41,8 +41,6 @@ parser.add_argument('-pmin', '--pmin',type=str,default='0.0',
                     help='minimum generated momentum')
 parser.add_argument('-pmax', '--pmax',type=str,default='100.0',
                     help='maximum generated momentum')
-parser.add_argument('-l', '--label',type=str,default='test_job',
-                    help='label label generated job script, same for subjobs')
 
 
 # parser.add_argument('-c', '--config',type=str,default='configuration-1',
@@ -129,7 +127,7 @@ f.write('#SBATCH --array=0-%d\n' % (args.njob-1))
 f.write('#SBATCH -o %s%s.%s.out\n' % (os.path.join(submit_dir,'log/'),'%A','%a')) 
 f.write('#SBATCH -e %s%s.%s.err\n' % (os.path.join(submit_dir,'log/'),'%A','%a'))
 f.write('%s/%s %s' % (submit_dir,subjob_script,submit_dir))
-f.write('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.label,args.pmin,args.pmax))
+f.write('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
 f.close()
 
 #Further example, replace the last f.write(...) with the following to additionally pass config to subjob_script
@@ -144,8 +142,8 @@ if (args.submit):
     print (submit_command)
     os.system(submit_command)
 else:
-    print('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.label,args.pmin,args.pmax))
-    os.system('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.label,args.pmin,args.pmax))
+    print('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
+    os.system('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
 
 #Now optionally create job script for merge job and possibly submit
 if ( args.merge ):
