@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export EIC_DIR=/p/lustre2/ftorales/generate_data/eic
+export EIC_DIR=/p/lustre1/dongwi1/generate_data/eic
 export SIF=${EIC_DIR}/working_image.sif
 cd $EIC_DIR
 
