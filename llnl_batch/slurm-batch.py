@@ -126,8 +126,10 @@ f.write('#SBATCH --array=0-%d\n' % (args.njob-1))
 #the %A's are slurm syntax to insert the numeric job ID and subjob index
 f.write('#SBATCH -o %s%s.%s.out\n' % (os.path.join(submit_dir,'log/'),'%A','%a')) 
 f.write('#SBATCH -e %s%s.%s.err\n' % (os.path.join(submit_dir,'log/'),'%A','%a'))
-f.write('%s/%s %s' % (submit_dir,subjob_script,submit_dir))
-f.write('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
+f.write('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s' %(submit_dir,subjob_script,
+    args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
+# ^This line parses all the arguments, and interfaces to the subjob script
+
 f.close()
 
 #Further example, replace the last f.write(...) with the following to additionally pass config to subjob_script
