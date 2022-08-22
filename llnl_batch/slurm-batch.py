@@ -63,7 +63,6 @@ time_est_subjob='00:00:10' #ten minutes
 time_est_merge='00:00:02' #two minutes
 
 
-
 # Further example of how to make sure enviroment is set
 # if os.getenv('HIPLOCAL'):
 #     hip_local = os.getenv('HIPLOCAL')
