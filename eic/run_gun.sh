@@ -1,7 +1,28 @@
 #!/bin/bash
 
+export SCRATCHDIR=/p/lscratchh/dongwi1
 export EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
 export SIF=${EIC_DIR}/working_image.sif
+
+#Making temp storage for container run scripts
+export TEMPFILEDIR=${SCRATCHDIR}/aicodedesign/tempscripts
+if [ ! -d "${TEMPFILEDIR}" ]; then
+    mkdir -p ${TEMPFILEDIR}
+fi
+
+# Storage of reconstruction and generated ROOT files
+export SIMWORKDIR=/p/lustre1/dongwi1/analysis/hip
+export RECODIR=${SIMWORKDIR}/recosim
+if [ ! -d "${RECODIR}" ]; then
+    mkdir -p ${RECODIR}
+fi
+export GENROOTDIR=${SIMWORKDIR}/gensim
+if [ ! -d "${GENROOTDIR}" ]; then
+    mkdir -p ${GENROOTDIR}
+fi
+
+
+FORMATTED_TASK_ID=`python -c 'import os; print("{:03}".format(int(os.getenv("SLURM_ARRAY_TASK_ID"))))'`
 
 function print_the_help {
   echo "USAGE: ${0} -n <nevents> -t <nametag> -p <particle> "
@@ -69,9 +90,10 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 # Create file to execute upon entering eic-shell
 #================================================
 #Make sure that similar file does not exist to avoid complications
-if [ -f "${FILENAME}" ]; then
-    echo "${FILENAME} exists and will be removed..."
-    rm "${FILENAME}"
+export TEMPFILENAME=${TEMPFILEDIR}/${FILENAME}
+if [ -f "${TEMPFILENAME}" ]; then
+    echo "${TEMPFILENAME} exists and will be removed..."
+    rm "${TEMPFILENAME}"
 fi
 
 echo "#!/bin/bash" > ${FILENAME}
@@ -79,8 +101,10 @@ echo -en "\n" >> ${FILENAME}
 echo "source ${EIC_DIR}/setup_env.sh"  >> ${FILENAME}
 echo "cd ${EIC_DIR}/reconstruction_benchmarks"  >> ${FILENAME}
 echo -en "\n" >> ${FILENAME}
-echo "The current directory is as follows: $(pwd)"  >> ${FILENAME}
-echo -en "\n" >> ${FILENAME}
-echo "bash benchmarks/clustering/full_cal_clusters.sh -p \"${PARTICLE}\" -n ${NEVENTS} --pmin ${PMIN} --pmax ${PMAX} -t ${G4FILENAME}"  >> ${FILENAME}
+echo "bash benchmarks/clustering/full_cal_clusters.sh -p \"${PARTICLE}\" -n ${NEVENTS} --pmin ${PMIN} --pmax ${PMAX} -t ${FORMATTED_TASK_ID}${G4FILENAME}"  >> ${FILENAME}
 chmod 700 ${FILENAME}
 bash eic-shell -- ./${FILENAME}
+
+mv ${FILENAME} ${TEMPFILEDIR}
+mv ${EIC_DIR}/reconstruction_benchmarks/rec_*.root ${RECODIR}
+mv ${EIC_DIR}/reconstruction_benchmarks/sim_*.root ${GENROOTDIR}
