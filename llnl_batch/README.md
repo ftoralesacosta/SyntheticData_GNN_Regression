@@ -9,19 +9,15 @@ For this reason, as much of the EIC stuff as possible is encapsulated in the eic
 
 ## Steps before Submitting Jobs:
 
-1. The `EIC_DIR` variable should should be the full path including the `eic` directory.
 The variable should be edited in these files:
-- generate_data/eic/__eic-shell__
+The `EIC_DIR` variable should should be the full path including the `eic` directory.
 - generate_data/llnl_batch/__run-subjob.sh__
 - generate_data/eic/__run_gun.sh__
 - generate_data/eic/reconstruction_benchmarks/benchmarks/clustering/__full_cal_clusters.sh__
 
 An example for user ftorales on LLNL login is: 
 
-/p/lustre2/ftorales/generate_data/eic
-
-2. Edit `eic-shell` by adding this line right under the $EIC_DIR declaration:
-- export SIF=$EIC_DIR/working_image.sif
+> /p/lustre2/ftorales/generate_data/eic
 
 This edit sets the full path to the image, such that the batch scripts can be run in pretty much any directory, run well, and save the output to the correct directory.
 
@@ -30,6 +26,8 @@ This command **s**ubmits **n**=10 subjobs to the batch system launches dependant
 **m**erge job to add all the root files together:
 > ./slurm-example.py -j [job name] -s -m -n 10 
 
+### Storage
+/p/lustre1 and /p/lustre2 have 20TB of storage each. Check with `quota -v`. Can check your current jobs with `squeue -u [user]`, and cancel them with `scancel [ID]`. 
 ### TODO:
 - improve the move command in run-subjob.sh to be more robust, and include the gen and hepmc files
 - find a way to pass arguments to the generation command (full_cal_clusters.sh) from outside the conainer.
