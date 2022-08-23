@@ -96,15 +96,21 @@ if [ -f "${TEMPFILENAME}" ]; then
     rm "${TEMPFILENAME}"
 fi
 
-echo "#!/bin/bash" > ${FILENAME}
-echo -en "\n" >> ${FILENAME}
-echo "source ${EIC_DIR}/setup_env.sh"  >> ${FILENAME}
-echo "cd ${EIC_DIR}/reconstruction_benchmarks"  >> ${FILENAME}
-echo -en "\n" >> ${FILENAME}
-echo "bash benchmarks/clustering/full_cal_clusters.sh -p \"${PARTICLE}\" -n ${NEVENTS} --pmin ${PMIN} --pmax ${PMAX} -t ${FORMATTED_TASK_ID}${G4FILENAME}"  >> ${FILENAME}
-chmod 700 ${FILENAME}
-bash ${EIC_DIR}/eic-shell -- ./${FILENAME}
+#Make Unique Script Name
+export GENSCRIPTNAME="${FORMATTED_TASK_ID}${FILENAME}.sh"
+echo "#!/bin/bash" > ${GENSCRIPTNAME}
+echo -en "\n" >> ${GENSCRIPTNAME}
+echo "source ${EIC_DIR}/setup_env.sh"  >> ${GENSCRIPTNAME}
+echo "cd ${EIC_DIR}/reconstruction_benchmarks"  >> ${GENSCRIPTNAME}
+echo -en "\n" >> ${GENSCRIPTNAME}
+echo "bash benchmarks/clustering/full_cal_clusters.sh -p \"${PARTICLE}\" -n ${NEVENTS} --pmin ${PMIN} --pmax ${PMAX} -t ${FORMATTED_TASK_ID}${G4FILENAME}"  >> ${GENSCRIPTNAME}
+chmod 700 ${GENSCRIPTNAME}
+bash ${EIC_DIR}/eic-shell -- ./${GENSCRIPTNAME}
 
-mv ${FILENAME} ${TEMPFILEDIR}
-mv ${EIC_DIR}/reconstruction_benchmarks/rec_*.root ${RECODIR}
-mv ${EIC_DIR}/reconstruction_benchmarks/sim_*.root ${GENROOTDIR}
+mv ${GENSCRIPTNAME} ${TEMPFILEDIR}
+mv ${EIC_DIR}/reconstruction_benchmarks/rec_${FORMATTED_TASK_ID}*.root ${RECODIR}
+mv ${EIC_DIR}/reconstruction_benchmarks/sim_${FORMATTED_TASK_ID}*.root ${GENROOTDIR}
+
+#Make the storage file read/writeable before hand
+chmod -R 777 ${RECODIR}
+chmod -R 777 ${GENROOTDIR}
