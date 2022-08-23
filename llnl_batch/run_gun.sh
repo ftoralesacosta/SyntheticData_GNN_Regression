@@ -1,7 +1,15 @@
 #!/bin/bash
 
-export SCRATCHDIR=/p/lscratchh/dongwi1
-export EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
+#Bishoy
+# export EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
+# export SCRATCHDIR=/p/lscratchh/dongwi1
+# export SIMWORKDIR=/p/lustre1/dongwi1/analysis/hip
+#Fernando
+export EIC_DIR=/p/lustre2/ftorales/generate_data/eic
+export SCRATCHDIR=/p/lscratchh/ftorales/AI-codesign
+export SIMWORKDIR=/p/lscratchh/ftorales/AI-codesign
+
+
 export SIF=${EIC_DIR}/working_image.sif
 
 #Making temp storage for container run scripts
@@ -10,12 +18,13 @@ if [ ! -d "${TEMPFILEDIR}" ]; then
     mkdir -p ${TEMPFILEDIR}
 fi
 
-# Storage of reconstruction and generated ROOT files
-export SIMWORKDIR=/p/lustre1/dongwi1/analysis/hip
+#Reco Root Directory 
 export RECODIR=${SIMWORKDIR}/recosim
 if [ ! -d "${RECODIR}" ]; then
     mkdir -p ${RECODIR}
 fi
+
+#Gen Root Directory
 export GENROOTDIR=${SIMWORKDIR}/gensim
 if [ ! -d "${GENROOTDIR}" ]; then
     mkdir -p ${GENROOTDIR}
