@@ -3,9 +3,6 @@ source /opt/detector/setup.sh
 
 EIC_DIR=/p/lustre2/ftorales/generate_data/eic
 
-printf "\n CURRENT WORKING DIRECTORY = {$PWD}\n\n"
-printf "\n EIC_DIR set to ${EIC_DIR} \n\n" 
-
 export LD_LIBRARY_PATH=${EIC_DIR}/development/lib:$LD_LIBRARY_PATH
 export PATH=${EIC_DIR}/development/bin:$PATH
 export DETECTOR_PATH=${EIC_DIR}/athena

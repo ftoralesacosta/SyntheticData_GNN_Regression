@@ -1,47 +1,42 @@
 #!/bin/bash
 
-#Bishoy
-# export EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
-# export SCRATCHDIR=/p/lscratchh/dongwi1
-# export SIMWORKDIR=/p/lustre1/dongwi1/analysis/hip
-#Fernando
+#===========================
+# User Specified Directories
+#===========================
+# -- Fernando -- 
 export EIC_DIR=/p/lustre2/ftorales/generate_data/eic
-export SCRATCHDIR=/p/lscratchh/ftorales/AI-codesign
-export SIMWORKDIR=/p/lscratchh/ftorales/AI-codesign
+export OUTPUT_DIR=/p/lscratchh/ftorales/AI-codesign
+# -- Bishoy -- 
+# export EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
+# export OUTPUT_DIR=/p/lscratchh/dongwi1 # OR /p/lustre1/dongwi1/analysis/hip 
+# -- Miguel --
+# export EIC_DIR=/p/lustre2/marratia/generate_data/eic
+# export OUTPUT_DIR=/p/lscratchh/marratia/AI-codesign
 
 
+#==================================
+# Parse Arguments and Set Variables
+#==================================
+#DEFAULTS before argument Parsing:
 export SIF=${EIC_DIR}/working_image.sif
+export NEVENTS="10"
+export PMIN="0.0"
+export PMAX="100.0"
+export PARTICLE="pion+"
 
-#Making temp storage for container run scripts
-export TEMPFILEDIR=${SCRATCHDIR}/aicodedesign/tempscripts
-if [ ! -d "${TEMPFILEDIR}" ]; then
-    mkdir -p ${TEMPFILEDIR}
-fi
-
-#Reco Root Directory 
-export RECODIR=${SIMWORKDIR}/recosim
-if [ ! -d "${RECODIR}" ]; then
-    mkdir -p ${RECODIR}
-fi
-
-#Gen Root Directory
-export GENROOTDIR=${SIMWORKDIR}/gensim
-if [ ! -d "${GENROOTDIR}" ]; then
-    mkdir -p ${GENROOTDIR}
-fi
-
-
-FORMATTED_TASK_ID=`python -c 'import os; print("{:03}".format(int(os.getenv("SLURM_ARRAY_TASK_ID"))))'`
+JOB_ARRAY_ID=`python -c 'import os; print("{:03}".format(int(os.getenv("SLURM_ARRAY_TASK_ID"))))'`
+SLURM_JOB_ID=`python -c 'import os; print("{:03}".format(int(os.getenv("SLURM_JOB_ID"))))'` 
 
 function print_the_help {
-  echo "USAGE: ${0} -n <nevents> -t <nametag> -p <particle> "
+  echo "USAGE: ${0} -n <nevents> -d <output_dir> -p <particle> "
   echo "  OPTIONS: "
-  echo "    -n,--nevents     Number of events"
-  echo "    -t,--nametag     name tag"
-  echo "    -p,--particle    particle type"
-  echo "    --pmin           minimum particle momentum (GeV)"
-  echo "    --pmax           maximum particle momentum (GeV)"
-  echo "                     allowed types: pion0, pion+, pion-, kaon0, kaon+, kaon-, proton, neutron, electron, positron, photon"
+  echo "    -n,--nevents     Number of events to generate"
+  echo "    -d,--directory   Directory for storing output root files, as well as temporary job scripts"
+  echo "    -j,--jobname     Name of Job, used for labelling large batches of submissions"
+  echo "    --pmin           Minimum particle momentum (GeV)"
+  echo "    --pmax           Maximum particle momentum (GeV)"
+  echo "    -p,--particle    Particle Species"
+  echo "                     Allowed Particles: pion0, pion+, pion-, kaon0, kaon+, kaon-, proton, neutron, electron, positron, photon"
   exit
 }
 
@@ -54,13 +49,13 @@ do
       shift # past argument
       print_the_help
       ;;
-    -j|--makejob)
-      export FILENAME="$2"
+    -j|--jobname)
+      export JOB_NAME="$2"
       shift #past argument
       shift #past value
       ;;
-    -t|--nametage)
-      export G4FILENAME="$2"
+    -d|--directory)
+      export OUTPUT_DIR="$2"
       shift #past argument
       shift #past value
       ;;
@@ -95,31 +90,73 @@ do
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
+#Check the Directories
+printf "\n EIC_DIR set to ${EIC_DIR} \n" 
+printf "\n Output Files will be moved to ${OUTPUT_DIR} \n" 
+
+#=====================================================
+# Crete Directories for storing Root Files and Scripts
+#=====================================================
+#Directory for run scripts
+export TEMPSCRIPT_DIR=${OUTPUT_DIR}/tempscripts
+if [ ! -d "${TEMPSCRIPT_DIR}" ]; then
+    mkdir -p ${TEMPSCRIPT_DIR}
+fi
+
+#Reco Root Directory 
+export RECO_DIR=${OUTPUT_DIR}/recosim
+if [ ! -d "${RECO_DIR}" ]; then
+    mkdir -p ${RECO_DIR}
+fi
+
+#Gen Root Directory
+export GEN_DIR=${OUTPUT_DIR}/gensim
+if [ ! -d "${GEN_DIR}" ]; then
+    mkdir -p ${GEN_DIR}
+fi
+
+#Gen Hepmc Directory
+export HEPMC_DIR=${GEN_DIR}/hepmc
+if [ ! -d "${HEPMC_DIR}" ]; then
+    mkdir -p ${HEPMC_DIR}
+fi
+
+#Make Unique Base Name
+NAME_TAG="${PARTICLE}_${SLURM_JOB_ID}_${JOB_ARRAY_ID}"
+
+
 #================================================
 # Create file to execute upon entering eic-shell
 #================================================
-#Make sure that similar file does not exist to avoid complications
-export TEMPFILENAME=${TEMPFILEDIR}/${FILENAME}
-if [ -f "${TEMPFILENAME}" ]; then
-    echo "${TEMPFILENAME} exists and will be removed..."
-    rm "${TEMPFILENAME}"
+#Make the script that runs inside the container
+export GENSCRIPTNAME="${NAME_TAG}.sh"
+if [ -f "${GENSCRIPTNAME}" ]; then
+    echo "${GENSCRIPTNAME} exists and will be removed..."
+    rm "${GENSCRIPTNAME}"
 fi
 
-#Make Unique Script Name
-export GENSCRIPTNAME="${FORMATTED_TASK_ID}${FILENAME}.sh"
+#Write to Script
 echo "#!/bin/bash" > ${GENSCRIPTNAME}
 echo -en "\n" >> ${GENSCRIPTNAME}
 echo "source ${EIC_DIR}/setup_env.sh"  >> ${GENSCRIPTNAME}
 echo "cd ${EIC_DIR}/reconstruction_benchmarks"  >> ${GENSCRIPTNAME}
 echo -en "\n" >> ${GENSCRIPTNAME}
-echo "bash benchmarks/clustering/full_cal_clusters.sh -p \"${PARTICLE}\" -n ${NEVENTS} --pmin ${PMIN} --pmax ${PMAX} -t ${FORMATTED_TASK_ID}${G4FILENAME}"  >> ${GENSCRIPTNAME}
+echo "bash benchmarks/clustering/full_cal_clusters.sh -p \"${PARTICLE}\" -n ${NEVENTS} --pmin ${PMIN} --pmax ${PMAX} -t ${NAME_TAG}"  >> ${GENSCRIPTNAME}
 chmod 700 ${GENSCRIPTNAME}
 bash ${EIC_DIR}/eic-shell -- ./${GENSCRIPTNAME}
 
-mv ${GENSCRIPTNAME} ${TEMPFILEDIR}
-mv ${EIC_DIR}/reconstruction_benchmarks/rec_${FORMATTED_TASK_ID}*.root ${RECODIR}
-mv ${EIC_DIR}/reconstruction_benchmarks/sim_${FORMATTED_TASK_ID}*.root ${GENROOTDIR}
 
-#Make the storage file read/writeable before hand
-chmod -R 777 ${RECODIR}
-chmod -R 777 ${GENROOTDIR}
+#=========================================
+# Move Output Files to Correct Directories
+#=========================================
+#Make sure that similar file does not exist to avoid complications
+printf "\n Moving files to ${OUTPUT_DIR} \n"
+mv ${GENSCRIPTNAME} ${TEMPSCRIPT_DIR}
+mv ${EIC_DIR}/reconstruction_benchmarks/rec_${NAME_TAG}*.root ${RECO_DIR}
+mv ${EIC_DIR}/reconstruction_benchmarks/sim_${NAME_TAG}*.root ${GEN_DIR}
+mv ${EIC_DIR}/reconstruction_benchmarks/gen_${NAME_TAG}*.hepmc ${HEPMC_DIR}
+
+#Make the stored files read/writeable
+chmod -R 777 ${RECO_DIR}
+chmod -R 777 ${GEN_DIR}
+chmod -R 777 ${HEPMC_DIR}

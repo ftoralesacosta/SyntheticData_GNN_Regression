@@ -22,8 +22,9 @@ parser = argparse.ArgumentParser(
 #
 parser.add_argument('-d', '--dir',type=str,
                     default='/p/lscratchh/ftorales/AI-codesign/',
+                   #default='/p/lscratchh/dongwi1/',
                     help='top level scratch directory')
-parser.add_argument('-j', '--jobset',type=str,default='codesign-example',
+parser.add_argument('-j', '--jobset',type=str,default='ai-codesign',
                     help='an identifier for the jobset, jobs submitted from a subdir of this name')
 parser.add_argument('-n', '--njob', type=int,default='10',
                     help='number of jobs to submit')
@@ -54,13 +55,11 @@ if not os.path.isdir(args.dir):
 
 #parameters for this example
 bank='mlodd'
-# subjob_script='run-subjob.sh'
 subjob_script='run_gun.sh'
 merge_script='run-merge.sh'
-# time_est_subjob='00:10:00' #ten hours
-# time_est_merge='00:02:00' #two hours
-time_est_subjob='00:00:10' #ten minutes
-time_est_merge='00:00:02' #two minutes
+# time_est_subjob='04:00:00' #one hour
+time_est_subjob='00:10:00' #ten minutes
+time_est_merge='01:00:00' #two hours
 
 
 # Further example of how to make sure enviroment is set
@@ -68,6 +67,7 @@ time_est_merge='00:00:02' #two minutes
 #     hip_local = os.getenv('HIPLOCAL')
 # else:
 #     raise ValueError('You must have $HIPLOCAL defined to run this script.')
+#TODO: Do this for $EIC_DIR here, instead of hardcoded path in run_gun.sh
 
 
 #create the submission directory args.dir/args.jobset
@@ -119,22 +119,22 @@ f.write('#!/bin/bash\n')
 f.write('#SBATCH -n 1\n')
 f.write('#SBATCH -t %s\n' % time_est_subjob)
 f.write('#SBATCH --job-name=%s\n' % args.jobset)
-f.write('#SBATCH -p pbatch\n')
+# f.write('#SBATCH -p pbatch\n')
+f.write('#SBATCH -p pdebug\n')
 f.write('#SBATCH -A %s\n' % bank)
 f.write('#SBATCH --array=0-%d\n' % (args.njob-1))
 #the %A's are slurm syntax to insert the numeric job ID and subjob index
 f.write('#SBATCH -o %s%s.%s.out\n' % (os.path.join(submit_dir,'log/'),'%A','%a')) 
 f.write('#SBATCH -e %s%s.%s.err\n' % (os.path.join(submit_dir,'log/'),'%A','%a'))
-f.write('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s' %(submit_dir,subjob_script,
-    args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
-# ^This line parses all the arguments, and interfaces to the subjob script
+f.write('%s/%s -n %s -d %s -p %s -j %s --pmin %s --pmax  %s' %(submit_dir,subjob_script,
+    args.nevents, submit_dir, args.particle, args.jobset, args.pmin,args.pmax) )
+# IMPORTANT FOR EDITORS: ^This line parses all the arguments, and interfaces to the run_gun.sh script
+# The flags here are similar between slurm-batch.py and run_gun.sh, but there are important differences.
 
 f.close()
 
 #Further example, replace the last f.write(...) with the following to additionally pass config to subjob_script
 #f.write('%s/%s %s %s' % (submit_dir,subjob_script,submit_dir,args.config))
-
-
 
 
 #submit job
@@ -143,9 +143,11 @@ if (args.submit):
     print (submit_command)
     os.system(submit_command)
 else:
-    print('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
-    os.system('%s/%s -n %s -p %s -j %s --pmin %s --pmax  %s -t test' % (submit_dir,subjob_script,args.nevents,args.particle,args.jobset,args.pmin,args.pmax))
+    print('%s/%s -n %s -d %s -p %s -j %s --pmin %s --pmax  %s' %(submit_dir,subjob_script,
+    args.nevents, submit_dir, args.particle, args.jobset, args.pmin,args.pmax) )
 
+    os.system('%s/%s -n %s -d %s -p %s -j %s --pmin %s --pmax  %s' %(submit_dir,subjob_script,
+    args.nevents, submit_dir, args.particle, args.jobset, args.pmin,args.pmax) )
 #Now optionally create job script for merge job and possibly submit
 if ( args.merge ):
     batchfile = basefile + '.merge.sh'
