@@ -90,7 +90,7 @@ calorimeters/test/
 *.pcm
 
 # transient directories and files
-setup
+# setup
 results
 *.root
 fieldmaps
