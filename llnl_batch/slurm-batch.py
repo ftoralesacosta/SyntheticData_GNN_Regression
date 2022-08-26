@@ -57,8 +57,8 @@ if not os.path.isdir(args.dir):
 bank='mlodd'
 subjob_script='run_gun.sh'
 merge_script='run-merge.sh'
-# time_est_subjob='04:00:00' #one hour
-time_est_subjob='00:10:00' #ten minutes
+time_est_subjob='04:00:00' #one hour
+# time_est_subjob='00:10:00' #ten minutes
 time_est_merge='01:00:00' #two hours
 
 
