@@ -1,9 +1,11 @@
 #!/bin/bash
 source /opt/detector/setup.sh
 
-EIC_DIR=/p/lustre2/ftorales/generate_data/eic
+EIC_DIR = $PWD
+#EIC_DIR=/p/lustre2/ftorales/generate_data/eic
 #EIC_DIR=/p/lustre2/marratia/generate_data/eic
 #EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
+#printf "EIC_DIR = ${EIC_DIR} \n"
 
 export LD_LIBRARY_PATH=${EIC_DIR}/development/lib:$LD_LIBRARY_PATH
 export PATH=${EIC_DIR}/development/bin:$PATH
