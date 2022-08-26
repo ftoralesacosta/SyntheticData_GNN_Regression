@@ -2,6 +2,8 @@
 source /opt/detector/setup.sh
 
 EIC_DIR=/p/lustre2/ftorales/generate_data/eic
+#EIC_DIR=/p/lustre2/marratia/generate_data/eic
+#EIC_DIR=/p/lustre1/dongwi1/analysis/hip/generate_data/eic
 
 export LD_LIBRARY_PATH=${EIC_DIR}/development/lib:$LD_LIBRARY_PATH
 export PATH=${EIC_DIR}/development/bin:$PATH
@@ -14,5 +16,4 @@ export HDF5_DIR=${EIC_DIR}/../to_hdf5/hdf5-1.8.22/hdf5
 export PATH=$PATH:${HDF5_DIR}/bin                                                                                             
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HDF5_DIR}/lib
 
-#export HDF5_DIR=/clusterfs/ml4hep_nvme2/ftoralesacosta/generate_data/to_hdf5/hdf5-1.8.22/hdf5 
-#For Reference
+#TODO: Reinstate ability to run without specifying $EIC_DIR
