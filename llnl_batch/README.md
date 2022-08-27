@@ -28,11 +28,15 @@ The submission directory will coy the appropriate scripts, and more importantly 
 
 ## To Submit the jobs
 This command **s**ubmits **n**=10 subjobs to the batch system, each generating 1000 pion+ events.
-The default time is 4 hours, so this command should finish comfortably within this timeframe.
+The default time is 4 hours, so this command should finish comfortably within this timeframe. Finally, it specifies the submission/output directory with the `-d` flag.
 
-> ./slurm-example.py -j [job name] -s -n 10 -ne 1000 -p pion+
+> ./slurm-batch.py -j [job name] -s -n 10 -ne 1000 -p pion+ -d /p/lscratchh/ftorales/AI-codesign/
+
+## Testing
+This command will run fewer 10 pion+ events, using one process, and will run on the login node by omitting the `-s` flag.
+./slurm-batch.py -j [job name] -n 1 -ne 10 -p pion+ 
 
 ### Storage
-/p/lustre1 and /p/lustre2 have 20TB of storage each. Check with `quota -v`. Can check your current jobs with `squeue -u [user]`, and cancel them with `scancel [ID]`. 
+`/p/lustre1` and `/p/lustre2` have 20TB of storage each. `lscratchh` is another option, but is more for temporary storage. Check with `quota -v`. Can check your current jobs with `squeue -u [user]`, and cancel them with `scancel [ID]`. 
 ###TO DO:
 Script the Merging of the files using a separate merge.sh and merge job.
