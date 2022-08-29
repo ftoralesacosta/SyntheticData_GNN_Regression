@@ -62,7 +62,7 @@ List of particles for the particle gun are found in /eic/athena/reconstruction_b
     "muon-": (13, 0.1056583),         # muon-                                                               
     "muon+": (-13, 0.1056583),         # muon+  
 
-4. Download and install HDF5
+7. Download and install HDF5
 While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script. Then run the next two commands to compile the code.
 > make root_to_hdf5
 
