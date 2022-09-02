@@ -4,10 +4,9 @@
 export LD_LIBRARY_PATH=$PWD/development/lib:$LD_LIBRARY_PATH
 export PATH=$PWD/development/bin:$PATH 
 
-#ATHENA Framework
-git clone https://eicweb.phy.anl.gov/EIC/detectors/athena.git
-cd athena
-git reset --hard f31bac7b8f8ae0f2088321191a1e116640c48296
+# Hadron endcap geometry
+git clone https://github.com/eiccodesign/eic_geometry.git hadron_endcap
+cd hadron_endcap
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=../../development
 make install
