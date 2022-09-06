@@ -20,7 +20,6 @@ mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=../../development
 make install
 cd ../..
-cp -r ip6/ip6 athena/
 
 git clone https://eicweb.phy.anl.gov/EIC/juggler.git
 cd juggler/
@@ -32,9 +31,3 @@ cd ../..
 pwd
 
 source setup_env.sh
-
-git clone https://eicweb.phy.anl.gov/EIC/benchmarks/reconstruction_benchmarks.git
-cd reconstruction_benchmarks/
-git checkout ai_codesign #includes changes from Miguel and Fernando
-git branch # just to check this is on the ai_codesign branch
-./bin/get_calibrations
