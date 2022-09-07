@@ -31,7 +31,7 @@ __note:__ The reconstruction benchomarks is a separate branch, rather than a spe
 > $DETECTOR_PATH/scripts/run_sim_hepmc.sh -part "pi+" -n 10 -p 20
 
 Also make sure to still be in the container when running this. You may need to source setup_env.sh again before running for the first time.
-This last command will use a HepMC generator (`$DETECTOR_PATH/hepmc_generation/gen_particles.cxx`) that fires a single particle gun along the proton beam axis to generate 10 pions with a momentum 20 GeV. 
+This last command will use a HepMC generator (`$DETECTOR_PATH/hepmc_generation/gen_particles.cxx`) that fires a single particle gun along the proton beam axis to generate 10 pions with a momentum 20 GeV. Note: there may be a warning about weights in the insert -- working on fixing this.
 Then, digitization and reconstruction will be run with `$DETECTOR_PATH/scripts/hadron_endcap_reco.py`
 Output will contain sim_${info_string}.edm4hep.root and rec_${info_string}.edm4hep.root files, which correspond to the G4-level and reconstructed level respectively (digitization, clustering). ${info_string} can be set within run_sim_hepmc.sh and is set by default to include the particle name, energy, and theta values by default. 
 The files will contain a ROOT TTree with the generated particles, hits at the G4 level, hits after digitization, and clusters. 
