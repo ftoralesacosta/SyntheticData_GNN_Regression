@@ -27,10 +27,10 @@ Make sure you're still in the container when running this.
 
 __note:__ The reconstruction benchomarks is a separate branch, rather than a specific commit like the other frameworks. It is the [ai_codesign](https://eicweb.phy.anl.gov/EIC/benchmarks/reconstruction_benchmarks/-/tree/ai_codesign) branch. The script automatically checks this branch out.
 
-6. Try the simulation
+5. Try the simulation
 > $DETECTOR_PATH/scripts/run_sim_hepmc.sh -part "pi+" -n 100 -p 20
 
-Also make sure to still be in the container when running this.
+Also make sure to still be in the container when running this. You may need to source setup_env.sh again before running for the first time.
 This last command will use a HepMC generator (`$DETECTOR_PATH/hepmc_generation/gen_particles.cxx`) that fires a single particle gun along the proton beam axis to generate 100 pions with a momentum 20 GeV. 
 Then, digitization and reconstruction will be run with `$DETECTOR_PATH/scripts/hadron_endcap_reco.py`
 Output will contain sim_${info_string}.edm4hep.root and rec_${info_string}.edm4hep.root files, which correspond to the G4-level and reconstructed level respectively (digitization, clustering). ${info_string} can be set within run_sim_hepmc.sh and is set by default to include the particle name, energy, and theta values by default. 
@@ -55,7 +55,7 @@ Examples of particles for the particle gun are:
 
 The HepMC generator contains parameters for minimum and maximum values of phi and theta and generates values uniformly between these. The momentum distribution can be changed with the `dist` parameter. By default, momentum is fixed (`dist = 0`), but it can also be distributed uniformly with +- 50% variation (`dist = 1`) and as a Gaussian with sigma = 0.1*mean (`dist = 2`). 
 
-7. Download and install HDF5
+6. Download and install HDF5
 While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script. Then run the next two commands to compile the code.
 > make root_to_hdf5
 
