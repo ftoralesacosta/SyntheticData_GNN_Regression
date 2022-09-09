@@ -23,7 +23,7 @@ cd ../..
 
 git clone https://eicweb.phy.anl.gov/EIC/juggler.git
 cd juggler/
-git reset --hard eda9e3ed1265f1a3da2f8a197eb7bd26cb7b9f77
+git reset --hard fa539623403c86259f9538bfce6a0defef517d95
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=../../development -DCMAKE_CXX_STANDARD=20
 make install
