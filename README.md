@@ -75,13 +75,7 @@ To re-enter the container, one just need to run two commands:
 > source setup_env.sh
 
 ### Note on Running Batch Jobs:
-Two scripts exist in the eic directory which allow you to push jobs to Livermore Clusters. Please take the time to edit both of these in order to set the appropriate paths for storing the log files from slurm (push2clust.sh: L12). Secondly, you will need to edit the contJob.cmd, line 30, to your preferred variable values. These scripts should even if the contJob.cmd is untouched (use default values).
-To push jobs you the cluster you simply execute the push2clust.sh as follows:
-> ./push2clust pion+
-
-You can of course change the particle name, but it must match the aforementioned particle name syntax exactly.
-
-TODO: Make this more user-friendly, input is welcome.
+Please read the README in the `llnl_batch` directory. Some minor edits simply specifying the output directory and $EIC_DIR environment variable are needed. After that, one should be able to push job arrays to SLURM.
 
 ### Note and Editing
 Most of the frameworks should not be edited, with the exception of the reconstruction `reconstruction_benchmarks` repository. We are using a branch specifically for the ai_codesign project, and changes to the particle gun as well as changes to the structure of the output root file can be done by editing the python files in that repository.
