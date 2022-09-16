@@ -1,10 +1,12 @@
 #!/bin/bash
+wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.13/hdf5-1.13.2/src/hdf5-1.13.2.tar.gz
 gzip -cd hdf5-1.13.2.tar.gz | tar xvf -
 cd hdf5-1.13.2
 
 ./configure --enable-cxx
 ldconfig
 #./config -flags for options. e.g. --enable-parallel
+
 make
 make install
 
