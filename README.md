@@ -25,8 +25,6 @@ One can set this environment variable themselves with `export SIF=$PWD/working_i
 This downloads the specific commits used to generate data. It builds them and and then sources the setup_env.sh script to set a handful of important environment variables inside the container.
 Make sure you're still in the container when running this.
 
-__note:__ The reconstruction benchomarks is a separate branch, rather than a specific commit like the other frameworks. It is the [ai_codesign](https://eicweb.phy.anl.gov/EIC/benchmarks/reconstruction_benchmarks/-/tree/ai_codesign) branch. The script automatically checks this branch out.
-
 5. Try the simulation
 > $DETECTOR_PATH/scripts/run_sim_hepmc.sh -part "pi+" -n 10 -p 20
 
@@ -34,8 +32,8 @@ Also make sure to still be in the container when running this.
 This last command will use a HepMC generator (`$DETECTOR_PATH/hepmc_generation/gen_particles.cxx`) that fires a single particle gun along the proton beam axis to generate 10 pions with a momentum 20 GeV.
 Then, digitization and reconstruction will be run with `$DETECTOR_PATH/scripts/hadron_endcap_reco.py`
 Output will contain sim_${info_string}.edm4hep.root and rec_${info_string}.edm4hep.root files, which correspond to the G4-level and reconstructed level respectively (digitization, clustering). ${info_string} can be set within run_sim_hepmc.sh and is set by default to include the particle name, energy, and theta values by default. 
-The files will contain a ROOT TTree with the generated particles, hits at the G4 level, hits after digitization, and clusters. 
-We will mainly be working with hits either before or after digitization.
+The files will contain a ROOT TTree with the generated particles, hits at the G4 level, and hits after digitization and reconstruction.
+We will mainly be working with hits after reconstruction.
 
 Examples of particles for the particle gun are:
 
