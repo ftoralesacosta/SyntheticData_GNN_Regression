@@ -1,17 +1,22 @@
 ### This Repo aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC Singularity container, as well as installing [our hadron endcap geometry](https://github.com/eiccodesign/eic_geometry) and __specific__ commits of `ip6` and `juggler` repositories. Lastly, it introduces HDF5 for the final data format.
 #### Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
 
-###Note: Due to a breaking update and a lapse in versioning of the EIC image, we must use a backed up Singularity image hosted ourselves. Google Drive is the current solution.
 
-> ./get_eic-container.sh
+Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
+
+Note: Due to a breaking update and a lapse in versioning of the EIC image, we must use a backed up Singularity image hosted ourselves. Google Drive is the current solution.
+
 1. Setup the environment for loading the container
+> ./get_eic-container.sh
 
 This will download the nightly container (which we no longer use) and creates a few required directories for the next step. It also sets various environment variables for using the container 
 
 2. Download the EIC singularity image from this [GDrive Link](https://drive.google.com/file/d/10WuqchbaVqLZthWtGjth2QMlSfEthw_t/view?usp=sharing)
 
 **Make sure the image is in the `eic` directorty.**
-If running on a headless machine, one can try using `gdown` package available through `pip`, e.g.  ```gdown 10WuqchbaVqLZthWtGjth2QMlSfEthw_t```
+
+If running on a headless machine, one can try using `gdown` package available through `pip`. For example, try  ```gdown 10WuqchbaVqLZthWtGjth2QMlSfEthw_t```
+
 
 3. Enter the container downloaded in Step 2  
 > ./enter_container.sh
@@ -19,14 +24,22 @@ If running on a headless machine, one can try using `gdown` package available th
 The enter_container script importantly specifies the container to use before running the `./eic-shell` command.
 One can set this environment variable themselves with `export SIF=$PWD/working_image.sif`.
 
-4. Grab specific commits of the repositories mentioned above, builds them, and sets a handful of important environment variables
+4. Run get_frameworks.sh. This grabs specific commits of the repositories mentioned above, builds them, and sets a handful of important environment variables
 > source get_frameworks.sh
 
 This downloads the specific commits used to generate data. It builds them and and then sources the setup_env.sh script to set a handful of important environment variables inside the container.
 Make sure you're still in the container when running this.
 
-5. Try the simulation
-> $DETECTOR_PATH/scripts/run_sim_hepmc.sh -part "pi+" -n 10 -p 20
+5. IMPORTANT (Temporary as of 8/29/2022): Remove references to `ecal` in `/generate_data/eic/athena/athena.xml`, Line 123. It should look like this:
+```
+120   <documentation level="10">                                               
+121   ## Central calorimetry                                                   
+122   </documentation>                                                         
+123   <!-- <include ref="compact/ecal.xml"/> -->                               
+124   <include ref="compact/hcal.xml"/>  
+```
+6. Try the simulation
+> bash benchmarks/clustering/full_cal_clusters.sh -p "pion+" -n 100 --pmin 19.99 --pmax 20.01 -t pionplus_20Gev_test
 
 Also make sure to still be in the container when running this.
 This last command will use a HepMC generator (`$DETECTOR_PATH/hepmc_generation/gen_particles.cxx`) that fires a single particle gun along the proton beam axis to generate 10 pions with a momentum 20 GeV.
@@ -66,13 +79,7 @@ To re-enter the container, one just need to run two commands:
 > source setup_env.sh
 
 ### Note on Running Batch Jobs:
-Two scripts exist in the eic directory which allow you to push jobs to Livermore Clusters. Please take the time to edit both of these in order to set the appropriate paths for storing the log files from slurm (push2clust.sh: L12). Secondly, you will need to edit the contJob.cmd, line 30, to your preferred variable values. These scripts should even if the contJob.cmd is untouched (use default values).
-To push jobs you the cluster you simply execute the push2clust.sh as follows:
-> ./push2clust pion+
-
-You can of course change the particle name, but it must match the aforementioned particle name syntax exactly.
-
-TODO: Make this more user-friendly, input is welcome.
+Please read the README in the `llnl_batch` directory. Some minor edits simply specifying the output directory and $EIC_DIR environment variable are needed. After that, one should be able to push job arrays to SLURM.
 
 ### To Do:
 1. Look into https://cloud.sylabs.io/library for hosting the image. Ideally, something that supports the `Singularity pull` command would be best for easy scripting.
