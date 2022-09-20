@@ -1,10 +1,7 @@
 ### This Repo aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC Singularity container, as well as installing [our hadron endcap geometry](https://github.com/eiccodesign/eic_geometry) and __specific__ commits of `ip6` and `juggler` repositories. Lastly, it introduces HDF5 for the final data format.
 #### Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
 
-
-Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
-
-Note: Due to a breaking update and a lapse in versioning of the EIC image, we must use a backed up Singularity image hosted ourselves. Google Drive is the current solution.
+###Note: Due to a breaking update and a lapse in versioning of the EIC image, we must use a backed up Singularity image hosted ourselves. Google Drive is the current solution.
 
 1. Setup the environment for loading the container
 > ./get_eic-container.sh
@@ -14,9 +11,7 @@ This will download the nightly container (which we no longer use) and creates a 
 2. Download the EIC singularity image from this [GDrive Link](https://drive.google.com/file/d/10WuqchbaVqLZthWtGjth2QMlSfEthw_t/view?usp=sharing)
 
 **Make sure the image is in the `eic` directorty.**
-
-If running on a headless machine, one can try using `gdown` package available through `pip`. For example, try  ```gdown 10WuqchbaVqLZthWtGjth2QMlSfEthw_t```
-
+If running on a headless machine, one can try using `gdown` package available through `pip`, e.g.  ```gdown 10WuqchbaVqLZthWtGjth2QMlSfEthw_t```
 
 3. Enter the container downloaded in Step 2  
 > ./enter_container.sh
@@ -30,9 +25,8 @@ One can set this environment variable themselves with `export SIF=$PWD/working_i
 This downloads the specific commits used to generate data. It builds them and and then sources the setup_env.sh script to set a handful of important environment variables inside the container.
 Make sure you're still in the container when running this.
 
-
 5. Try the simulation
-> bash benchmarks/clustering/full_cal_clusters.sh -p "pion+" -n 100 --pmin 19.99 --pmax 20.01 -t pionplus_20Gev_test
+> $DETECTOR_PATH/scripts/run_sim_hepmc.sh -part "pi+" -n 10 -p 20
 
 Also make sure to still be in the container when running this.
 This last command will use a HepMC generator (`$DETECTOR_PATH/hepmc_generation/gen_particles.cxx`) that fires a single particle gun along the proton beam axis to generate 10 pions with a momentum 20 GeV.
