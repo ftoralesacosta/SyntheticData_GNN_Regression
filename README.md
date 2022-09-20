@@ -53,6 +53,8 @@ Examples of particles for the particle gun are:
 
 The HepMC generator contains parameters for minimum and maximum values of phi and theta and generates values uniformly between these. The momentum distribution can be changed with the `dist` parameter. By default, momentum is fixed (`dist = 0`), but it can also be distributed uniformly with +- 50% variation (`dist = 1`) and as a Gaussian with sigma = 0.1*mean (`dist = 2`). 
 
+### Note on geometry: Please read the README in the [eic_geometry](https://github.com/eiccodesign/eic_geometry) repo if you have questions about the simulation geometry. 
+
 6. Download and install HDF5
 While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script. Then run the next two commands to compile the code.
 > make root_to_hdf5
