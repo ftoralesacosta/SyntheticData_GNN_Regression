@@ -30,15 +30,8 @@ One can set this environment variable themselves with `export SIF=$PWD/working_i
 This downloads the specific commits used to generate data. It builds them and and then sources the setup_env.sh script to set a handful of important environment variables inside the container.
 Make sure you're still in the container when running this.
 
-5. IMPORTANT (Temporary as of 8/29/2022): Remove references to `ecal` in `/generate_data/eic/athena/athena.xml`, Line 123. It should look like this:
-```
-120   <documentation level="10">                                               
-121   ## Central calorimetry                                                   
-122   </documentation>                                                         
-123   <!-- <include ref="compact/ecal.xml"/> -->                               
-124   <include ref="compact/hcal.xml"/>  
-```
-6. Try the simulation
+
+5. Try the simulation
 > bash benchmarks/clustering/full_cal_clusters.sh -p "pion+" -n 100 --pmin 19.99 --pmax 20.01 -t pionplus_20Gev_test
 
 Also make sure to still be in the container when running this.
