@@ -30,7 +30,7 @@ int n_subsystems ;
 char subsystem_prefixes[MAX_SUBSYS][100]  ;
 char subsystem_short_names[MAX_SUBSYS][15] ;
 
-char TrainTestVal_pref[N_SPLITS][10] ;
+char TrainTestVal_prefix[N_SPLITS][10] ;
 
 //-----------------------------------------------------------------------------------------------------
 
@@ -595,15 +595,15 @@ int main(int argc, char *argv[]){
 
   mc_property.setChunk(RANK, mc_dim_chunk);
 
-  sprintf(TrainTestVal_pref[0], "train_") ;
-  sprintf(TrainTestVal_pref[1], "test_") ;
-  sprintf(TrainTestVal_pref[2], "val_") ;
+  sprintf(TrainTestVal_prefix[0], "train_") ;
+  sprintf(TrainTestVal_prefix[1], "test_") ;
+  sprintf(TrainTestVal_prefix[2], "val_") ;
 
   char dataset_name[20];
   H5::DataSet* calo_data_set[MAX_SUBSYS*N_SPLITS] ;
   for ( size_t si; si<n_subsystems; si++ ) {
     for (size_t split; split<N_SPLITS; split++){
-      strcpy(dataset_name,TrainTestVal_pref[split]); strcat(dataset_name,subsystem_short_names[si]);
+      strcpy(dataset_name,TrainTestVal_prefix[split]); strcat(dataset_name,subsystem_short_names[si]);
       calo_data_set[split + N_SPLITS*si] = new H5::DataSet( file.createDataSet( dataset_name, 
             H5::PredType::NATIVE_FLOAT, *calo_data_space[si], *calo_property[si] ) ) ;
     }
@@ -612,7 +612,7 @@ int main(int argc, char *argv[]){
 
   H5::DataSet* mc_data_set[N_SPLITS];
   for (size_t split; split<N_SPLITS; split++){
-    strcpy(dataset_name,TrainTestVal_pref[split]); strcat(dataset_name,"mc");
+    strcpy(dataset_name,TrainTestVal_prefix[split]); strcat(dataset_name,"mc");
     mc_data_set[split] = new H5::DataSet(file.createDataSet(dataset_name, 
         H5::PredType::NATIVE_FLOAT, mc_data_space, mc_property));
   }
