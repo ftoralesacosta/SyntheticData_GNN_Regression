@@ -199,6 +199,7 @@ void write_data(
       //Gets Max N hits, helpfull for looping and setting array sizes
 
       for ( int si=0; si<n_subsystems; si++ ) {
+        float_t hitE_sum = 0;
         for (size_t h_hit = 0; h_hit < subsysNHits[si]; h_hit++) {
           if ( (*(subsysE[si]))[h_hit] > 1e10) continue ; //Spikey Cells. Should be fixed in Juggler Commit post Feb2022
           if ( (*(subsysE[si]))[h_hit] <= 0.00006 ) continue ; //MIPS and Empty Cells
@@ -213,11 +214,13 @@ void write_data(
           (*(subsys_data[si]))[X_index] = (*(subsysX[si]))[h_hit] ;
           (*(subsys_data[si]))[Y_index] = (*(subsysY[si]))[h_hit] ;
           (*(subsys_data[si]))[Z_index] = (*(subsysZ[si]))[h_hit] ;
+          hitE_sum += (*(subsys_data[si]))[E_index];
           subsys_fill[si] ++ ;
 
         } // h_hit
         if ( subsysNHits[si] == 0 ) continue ;
         if ( subsys_fill[si] == 0 ) continue ;
+        if (hitE_sum < 100) continue; //FIXME: add to some central config. Depends on sampling fraction. Set to HCAL only.
 
       } // si
 
@@ -231,7 +234,11 @@ void write_data(
         //Calculated Values
         float mcPT = hypot(mcPX[particle], mcPY[particle]);
         float mcP = hypot(mcPX[particle], mcPY[particle], mcPZ[particle]);
+
         float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
+        if (mcTheta > 30.0) continue;
+        if (mcTheta < 5.0) continue; //FIXME: According to HCal appeptance. Be weary of detector variation
+
 
         mc_data[(iblock*mc_row_size + 0)*mcNParticles_max + mc_fill] = mcPDG[particle]; 
         mc_data[(iblock*mc_row_size + 1)*mcNParticles_max + mc_fill] = mcSimulatorStatus[particle]; 
@@ -252,7 +259,7 @@ void write_data(
 
         mc_fill++;
       }// If sim/gun is working, each event should only have one particle with GenStatus = 1
-      if (mc_fill == 0) continue;
+      if (mc_fill == 0) continue; // skip events with no MC particles that pass selection.
 
       bool print_cal = false;
       bool print_mc = false;
