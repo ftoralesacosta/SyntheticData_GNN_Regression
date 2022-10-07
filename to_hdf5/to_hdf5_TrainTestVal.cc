@@ -130,7 +130,7 @@ void write_data(
     char *argv_first[], char *argv_last[]) 
 {
 
-  printf("\n\n ========== Beginning of write_data\n\n") ;
+  printf(Form("\n\n ========== Beginning of write_data for split %i\n\n",i_split)) ;
 
   for (char **p = argv_first; p != argv_last; p++) {
 
@@ -264,7 +264,6 @@ void write_data(
       bool print_cal = false;
       bool print_mc = false;
 
-
       if (iblock == (block_size-1)) 
       {
         //writes 1 block (100 events) at a time. Faster/less memory
@@ -306,6 +305,7 @@ void write_data(
           // see file.createDataSet()
           for ( size_t si=0; si<n_subsystems; si++ ) {
             calo_data_set[i_split + si*N_SPLITS] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT );
+            std::cout << "INDEX FOR WRITING" << i_split+si*N_SPLITS<< std::endl;
           } // si
           mc_data_set[i_split]->write(&mc_data[0], H5::PredType::NATIVE_FLOAT);
 
@@ -368,6 +368,7 @@ void write_data(
           for ( size_t si=0; si<n_subsystems; si++ ) {
             calo_data_set[i_split + si*N_SPLITS] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT,
                 *subsys_memory_space[si], *subsys_file_space[si] ) ;
+            std::cout << "INDEX FOR WRITING" << i_split+si*N_SPLITS<< std::endl;
           } // si
 
           H5::DataSpace mc_memory_space(RANK, mc_dim_extend, NULL);
@@ -449,6 +450,7 @@ int main(int argc, char *argv[]){
         printf("             - found %s.\n", ssname ) ;
         sprintf( subsystem_prefixes[si], "%s", ssname ) ;
         sprintf( subsystem_short_names[si], "hcal" )  ;
+        std::cout << "SUBYS IN INSERT CHECK = "<< subsystem_short_names[si] << std::endl;
         si++ ;
       }
       sprintf( ssname, "HcalEndcapPInsertHitsReco" ) ;
@@ -456,6 +458,7 @@ int main(int argc, char *argv[]){
         printf("             - found %s.\n", ssname ) ;
         sprintf( subsystem_prefixes[si], "%s", ssname ) ;
         sprintf( subsystem_short_names[si], "hcali" )  ;
+        std::cout << "SUBYS IN INSERT CHECK = "<< subsystem_short_names[si] << std::endl;
         si++ ;
       }
       sprintf( ssname, "EcalEndcapPHitsReco" ) ;
@@ -601,11 +604,15 @@ int main(int argc, char *argv[]){
 
   char dataset_name[20];
   H5::DataSet* calo_data_set[MAX_SUBSYS*N_SPLITS] ;
-  for ( size_t si; si<n_subsystems; si++ ) {
-    for (size_t split; split<N_SPLITS; split++){
+
+  for (size_t split; split<N_SPLITS; split++){
+    for ( size_t si = 0; si<n_subsystems; si++ ) {
+
+
       strcpy(dataset_name,TrainTestVal_prefix[split]); strcat(dataset_name,subsystem_short_names[si]);
       calo_data_set[split + N_SPLITS*si] = new H5::DataSet( file.createDataSet( dataset_name, 
             H5::PredType::NATIVE_FLOAT, *calo_data_space[si], *calo_property[si] ) ) ;
+      fprintf(stderr, Form("%s %d: Dataset Name = %s\n",__func__,__LINE__,dataset_name));
     }
   } // si
 
@@ -614,7 +621,7 @@ int main(int argc, char *argv[]){
   for (size_t split; split<N_SPLITS; split++){
     strcpy(dataset_name,TrainTestVal_prefix[split]); strcat(dataset_name,"mc");
     mc_data_set[split] = new H5::DataSet(file.createDataSet(dataset_name, 
-        H5::PredType::NATIVE_FLOAT, mc_data_space, mc_property));
+          H5::PredType::NATIVE_FLOAT, mc_data_space, mc_property));
   }
 
   float train_fraction = 0.5;
@@ -630,7 +637,8 @@ int main(int argc, char *argv[]){
   //Make sure each split is a multiple of block_size;
   for (size_t i_split = 0; i_split < N_SPLITS; i_split++) {
     nevents_split[i_split+1] = int(nevents_split[i_split+1]/100)*100;
-      std::cout << "Event split "<< i_split <<" = " <<nevents_split[i_split+1] << std::endl;
+    fprintf(stderr, Form("%s %d: Event Split %i NEvents = %llu \n",
+          __func__,__LINE__,i_split,nevents_split[i_split+1]));
   }
 
   hsize_t offset[RANK] = {0, 0, 0};
