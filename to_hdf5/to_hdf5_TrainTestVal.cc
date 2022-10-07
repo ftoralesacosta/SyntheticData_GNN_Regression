@@ -153,7 +153,6 @@ void write_data(
           subsysZ[si] = new TTreeReaderArray<Float_t>( events, Form("%s.position.z", subsystem_prefixes[si]));
     } // si
 
-
     TTreeReaderArray<int> mcPDG( events, Form("%s.PDG",mc_str));
     TTreeReaderArray<int> mcSimulatorStatus( events, Form("%s.simulatorStatus",mc_str));
     TTreeReaderArray<int> mcGeneratorStatus( events, Form("%s.generatorStatus",mc_str));
@@ -305,7 +304,6 @@ void write_data(
           // see file.createDataSet()
           for ( size_t si=0; si<n_subsystems; si++ ) {
             calo_data_set[i_split + si*N_SPLITS] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT );
-            std::cout << "INDEX FOR WRITING" << i_split+si*N_SPLITS<< std::endl;
           } // si
           mc_data_set[i_split]->write(&mc_data[0], H5::PredType::NATIVE_FLOAT);
 
@@ -628,7 +626,7 @@ int main(int argc, char *argv[]){
   float test_fraction = 0.2;
   float val_fraction = 0.3;
 
-  size_t nevents_split[4] = {0,10000,15000,eventsN_max};
+  size_t nevents_split[4] = {0};
   nevents_split[0] = 0;
   nevents_split[1] = (eventsN_max*train_fraction);
   nevents_split[2] = (eventsN_max*test_fraction)+nevents_split[1];
@@ -636,10 +634,15 @@ int main(int argc, char *argv[]){
 
   //Make sure each split is a multiple of block_size;
   for (size_t i_split = 0; i_split < N_SPLITS; i_split++) {
+
     nevents_split[i_split+1] = int(nevents_split[i_split+1]/100)*100;
-    fprintf(stderr, Form("%s %d: Event Split %i NEvents = %llu \n",
+
+    fprintf(stderr, Form("%s %d: Event Split %i Ends at = %llu \n",
           __func__,__LINE__,i_split,nevents_split[i_split+1]));
   }
+
+  fprintf(stderr, Form("%s %d: Total Number of Events = %llu \n",
+        __func__,__LINE__,eventsN_max));
 
   hsize_t offset[RANK] = {0, 0, 0};
   for (size_t i_split = 0; i_split < N_SPLITS; i_split++) {
