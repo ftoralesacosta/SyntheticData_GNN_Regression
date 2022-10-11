@@ -97,7 +97,7 @@ void find_max_dims(
        }//while events
     }
     for ( int si=0; si<n_subsystems; si++ ) {
-          delete subsysE[si] ;
+      delete subsysE[si] ;
     }
 
     std::cout << std::endl;
@@ -105,7 +105,7 @@ void find_max_dims(
     delete file;
 
     printf("\n\n  find_max_dims :   eventsN_max = %u,  calo_NHits_max = %u,  mcNParticles_max = %u\n\n",
-       eventsN_max, calo_NHits_max, mcNParticles_max ) ;
+        eventsN_max, calo_NHits_max, mcNParticles_max ) ;
 
   }//argc
 
@@ -178,9 +178,11 @@ void write_data(
       if (i >= eventsN_max) break;
       if (i < nevents_split[i_split]) {
         i++;
-        continue;
+        continue; //since we use a while loop, we skip events until the split starts
       }
       if (i >= nevents_split[i_split+1]) break;
+
+      fprintf(stderr,Form("%s %d: event %llu/%llu \r",__func__,__LINE__,i,nevents_split[i_split+1]));
 
       int iblock = i % block_size;
 
@@ -366,7 +368,6 @@ void write_data(
           for ( size_t si=0; si<n_subsystems; si++ ) {
             calo_data_set[i_split + si*N_SPLITS] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT,
                 *subsys_memory_space[si], *subsys_file_space[si] ) ;
-            std::cout << "INDEX FOR WRITING" << i_split+si*N_SPLITS<< std::endl;
           } // si
 
           H5::DataSpace mc_memory_space(RANK, mc_dim_extend, NULL);
@@ -443,6 +444,7 @@ int main(int argc, char *argv[]){
     for ( int i=0; i< lob->GetEntries(); i++ ) {
       printf( "  %3d : %s\n", i, lob->At(i) -> GetName() ) ;
       char ssname[1000] ;
+
       sprintf( ssname, "HcalEndcapPHitsReco" ) ;
       if ( strcmp( lob->At(i) -> GetName(), ssname ) == 0 ) {
         printf("             - found %s.\n", ssname ) ;
@@ -496,7 +498,9 @@ int main(int argc, char *argv[]){
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
+  /* find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max); */
+  eventsN_max = 1000; calo_NHits_max = 2000; mcNParticles_max = 30;
+  //Can comment the above out with proper initialization
 
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
@@ -635,7 +639,7 @@ int main(int argc, char *argv[]){
   //Make sure each split is a multiple of block_size;
   for (size_t i_split = 0; i_split < N_SPLITS; i_split++) {
 
-    nevents_split[i_split+1] = int(nevents_split[i_split+1]/100)*100;
+    nevents_split[i_split+1] = int(nevents_split[i_split+1]/block_size)*block_size;
 
     fprintf(stderr, Form("%s %d: Event Split %i Ends at = %llu \n",
           __func__,__LINE__,i_split,nevents_split[i_split+1]));
