@@ -176,6 +176,7 @@ void write_data(
     while (events.Next()) {
 
       if (i >= eventsN_max) break;
+
       if (i < nevents_split[i_split]) {
         i++;
         continue; //since we use a while loop, we skip events until the split starts
@@ -199,6 +200,7 @@ void write_data(
       for ( int si=0; si<n_subsystems; si++ ) { subsysNHits[si] = subsysE[si] -> GetSize() ; }
       //Gets Max N hits, helpfull for looping and setting array sizes
 
+      bool skip_event = false;
       for ( int si=0; si<n_subsystems; si++ ) {
         float_t hitE_sum = 0;
         for (size_t h_hit = 0; h_hit < subsysNHits[si]; h_hit++) {
@@ -219,11 +221,15 @@ void write_data(
           subsys_fill[si] ++ ;
 
         } // h_hit
-        if ( subsysNHits[si] == 0 ) continue ;
-        if ( subsys_fill[si] == 0 ) continue ;
-        if (hitE_sum < 100) continue; //FIXME: add to some central config. Depends on sampling fraction. Set to HCAL only.
 
+        if ( subsysNHits[si] == 0 ) skip_event = true ;
+        if ( subsys_fill[si] == 0 ) skip_event = true ;
+        if (hitE_sum < 100) skip_event = true; 
+        //FIXME: add to some central config. Depends on sampling fraction. Set to HCAL only.
       } // si
+
+      if (skip_event) continue;
+      //mc particle should not fill if subsys_fill == 0. This should skip i++ L407
 
 
       size_t mc_fill = 0;
@@ -492,14 +498,14 @@ int main(int argc, char *argv[]){
   size_t eventsN_max = 0;
   size_t calo_NHits_max = 0;
   size_t mcNParticles_max = 0;
-  size_t block_size = 100; //affects chunk size, 
+  size_t block_size = 10_000; //affects chunk size, 
 
   //Constants for Layering HCal
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  /* find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max); */
-  eventsN_max = 1000; calo_NHits_max = 2000; mcNParticles_max = 30;
+  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
+  /* eventsN_max = 1000; calo_NHits_max = 2000; mcNParticles_max = 30; */
   //Can comment the above out with proper initialization
 
 
