@@ -245,6 +245,7 @@ void write_data(
         float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
         if (mcTheta > 30.0) continue;
         if (mcTheta < 5.0) continue; //FIXME: According to HCal appeptance. Be weary of detector variation
+        if (mcP < 50) continue; //FIXME: for debugging ONLY!!!
 
 
         mc_data[(iblock*mc_row_size + 0)*mcNParticles_max + mc_fill] = mcPDG[particle]; 
@@ -491,6 +492,7 @@ int main(int argc, char *argv[]){
   }
   printf("\n\n found %d subsystems.\n\n", n_subsystems ) ;
 
+  bool do_compression = false;
 
   static const size_t cal_row_size = 4; //Number of calorimeter hit variables
   static const size_t mc_row_size = 10; //Number of MC truth variables
@@ -498,14 +500,14 @@ int main(int argc, char *argv[]){
   size_t eventsN_max = 0;
   size_t calo_NHits_max = 0;
   size_t mcNParticles_max = 0;
-  size_t block_size = 10_000; //affects chunk size, 
+  size_t block_size = 1000; //affects chunk size, 
 
   //Constants for Layering HCal
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
-  /* eventsN_max = 1000; calo_NHits_max = 2000; mcNParticles_max = 30; */
+  /* find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max); */
+  eventsN_max = 2000000; calo_NHits_max = 1861; mcNParticles_max = 30;
   //Can comment the above out with proper initialization
 
 
@@ -564,10 +566,10 @@ int main(int argc, char *argv[]){
 #ifdef HDF5_USE_DEFLATE
   // Check for zlib (deflate) availability and enable 
   if (!H5Zfilter_avail(H5Z_FILTER_DEFLATE)) {
-    fprintf(stderr, "%s:%d: warning: deflate filter not "
-        "available\n", __FILE__, __LINE__);
+    fprintf(stderr, "%s:%d: warning: deflate filter not available\n",
+        __FILE__, __LINE__);
   }
-  else {
+  else if (do_compression) {
     unsigned int filter_info;
 
     H5Zget_filter_info(H5Z_FILTER_DEFLATE, &filter_info);
@@ -583,6 +585,8 @@ int main(int argc, char *argv[]){
       mc_property.setDeflate(1);
     }
   }
+  else
+    fprintf(stderr, "%s:%d: Skipping ZLIB Compression\n",__FILE__,__LINE__);
 #endif // HDF5_USE_DEFLATE
 
   hsize_t calo_dim_chunk[MAX_SUBSYS][RANK] ;
