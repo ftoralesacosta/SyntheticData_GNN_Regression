@@ -506,8 +506,8 @@ int main(int argc, char *argv[]){
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  /* find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max); */
-  eventsN_max = 2000000; calo_NHits_max = 1861; mcNParticles_max = 30;
+  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
+  /* eventsN_max = 2000000; calo_NHits_max = 1861; mcNParticles_max = 30; */
   //Can comment the above out with proper initialization
 
 
