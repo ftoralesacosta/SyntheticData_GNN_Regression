@@ -143,10 +143,10 @@ if (args.submit):
     print (submit_command)
     os.system(submit_command)
 else:
-    print('%s/%s -n %s -d %s -p %s -j %s --pmin %s --pmax  %s' %(submit_dir,subjob_script,
+    print('%s/%s -n %s -d %s -p %s -j %s --pmin %s --pmax %s' %(submit_dir,subjob_script,
     args.nevents, submit_dir, args.particle, args.jobset, args.pmin,args.pmax) )
 
-    os.system('%s/%s -n %s -d %s -p %s -j %s --pmin %s --pmax  %s' %(submit_dir,subjob_script,
+    os.system('%s/%s -n %s -d %s -p %s -j %s --pmin %s --pmax %s' %(submit_dir,subjob_script,
     args.nevents, submit_dir, args.particle, args.jobset, args.pmin,args.pmax) )
 #Now optionally create job script for merge job and possibly submit
 if ( args.merge ):
