@@ -183,7 +183,7 @@ void write_data(
       }
       if (i >= nevents_split[i_split+1]) break;
 
-      fprintf(stderr,Form("%s %d: event %llu/%llu \r",__func__,__LINE__,i,nevents_split[i_split+1]));
+      /* fprintf(stderr,Form("%s %d: event %llu/%llu \r",__func__,__LINE__,i,nevents_split[i_split+1])); */
 
       int iblock = i % block_size;
 
@@ -213,6 +213,7 @@ void write_data(
           size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + subsys_fill[si];
           //Index for flattened 3D vector
 
+          /* (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] ; //GeV to MeV */
           (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] * 1000 ; //GeV to MeV
           (*(subsys_data[si]))[X_index] = (*(subsysX[si]))[h_hit] ;
           (*(subsys_data[si]))[Y_index] = (*(subsysY[si]))[h_hit] ;
@@ -225,6 +226,7 @@ void write_data(
         if ( subsysNHits[si] == 0 ) skip_event = true ;
         if ( subsys_fill[si] == 0 ) skip_event = true ;
         if (hitE_sum < 100) skip_event = true; 
+        /* if (hitE_sum < .100) skip_event = true; */ 
         //FIXME: add to some central config. Depends on sampling fraction. Set to HCAL only.
       } // si
 
@@ -245,7 +247,8 @@ void write_data(
         float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
         if (mcTheta > 30.0) continue;
         if (mcTheta < 5.0) continue; //FIXME: According to HCal appeptance. Be weary of detector variation
-        if (mcP < 50) continue; //FIXME: for debugging ONLY!!!
+        /* if (mcP < 50) continue; //FIXME: for debugging ONLY!!! */
+        /* if (mcP > 50) continue; //FIXME: for debugging ONLY!!! */
 
 
         mc_data[(iblock*mc_row_size + 0)*mcNParticles_max + mc_fill] = mcPDG[particle]; 
@@ -506,10 +509,8 @@ int main(int argc, char *argv[]){
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
-  /* eventsN_max = 2000000; calo_NHits_max = 1861; mcNParticles_max = 30; */
-  //Can comment the above out with proper initialization
-
+  /* find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max); */
+  eventsN_max = 200000; calo_NHits_max = 1861; mcNParticles_max = 30;
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
   // not throwing an exception (unlike H5F_ACC_RDWR)
