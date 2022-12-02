@@ -188,7 +188,8 @@ void write_data(
       //Gets Max N hits, helpfull for looping and setting array sizes
 
       for ( int si=0; si<n_subsystems; si++ ) {
-         for (size_t h_hit = 0; h_hit < subsysNHits[si]; h_hit++) {
+        float_t hitE_sum = 0;
+        for (size_t h_hit = 0; h_hit < subsysNHits[si]; h_hit++) {
             if ( (*(subsysE[si]))[h_hit] > 1e10) continue ; //Spikey Cells. Should be fixed in Juggler Commit post Feb2022
             if ( (*(subsysE[si]))[h_hit] <= 0.00006 ) continue ; //MIPS and Empty Cells
             if ( (*(subsysT[si]))[h_hit] > 200 ) continue ;
@@ -198,14 +199,17 @@ void write_data(
             size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + subsys_fill[si];
             //Index for flattened 3D vector
 
-            (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] * 1000 ; //GeV to MeV
+            /* (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] * 1000 ; //GeV to MeV */
+            (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] ; //GeV
             (*(subsys_data[si]))[X_index] = (*(subsysX[si]))[h_hit] ;
             (*(subsys_data[si]))[Y_index] = (*(subsysY[si]))[h_hit] ;
             (*(subsys_data[si]))[Z_index] = (*(subsysZ[si]))[h_hit] ;
+            hitE_sum += (*(subsys_data[si]))[E_index];
             subsys_fill[si] ++ ;
          } // h_hit
          if ( subsysNHits[si] == 0 ) continue ;
          if ( subsys_fill[si] == 0 ) continue ;
+         if (    hitE_sum < 0.1    ) continue ;
       } // si
 
 
@@ -239,6 +243,7 @@ void write_data(
 
         mc_fill++;
       }// If sim/gun is working, each event should only have one particle with GenStatus = 1
+
       if (mc_fill == 0) continue;
 
       bool print_cal = false;
@@ -474,7 +479,8 @@ int main(int argc, char *argv[]){
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
+  /* find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max); */
+  eventsN_max = 200000; calo_NHits_max = 1861; mcNParticles_max = 30;
 
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
