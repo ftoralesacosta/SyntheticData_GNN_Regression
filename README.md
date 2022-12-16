@@ -1,37 +1,27 @@
-### This Repo aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC Singularity container, as well as installing [our hadron endcap geometry](https://github.com/eiccodesign/eic_geometry) and __specific__ commits of `ip6` and `juggler` repositories. Lastly, it introduces HDF5 for the final data format.
+### This Repo aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC Singularity container, as well as installing [our hadron endcap geometry](https://github.com/eiccodesign/eic_geometry) and the [IP6 (beamline) repository](https://github.com/eic/ip6). Lastly, it introduces HDF5 for the final data format.
 #### Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
 
-###Note: Due to a breaking update and a lapse in versioning of the EIC image, we must use a backed up Singularity image hosted ourselves. Google Drive is the current solution.
-
 1. Setup the environment for loading the container
-> ./get_eic-container.sh
+> source get_eic-container.sh
 
-This will download the nightly container (which we no longer use) and creates a few required directories for the next step. It also sets various environment variables for using the container 
+This will download the nightly container and creates a few required directories for the next step. It also sets various environment variables for using the container 
 
-2. Download the EIC singularity image from this [GDrive Link](https://drive.google.com/file/d/10WuqchbaVqLZthWtGjth2QMlSfEthw_t/view?usp=sharing)
+2. Enter the container downloaded in Step 1
+> ./eic-shell
 
-**Make sure the image is in the `eic` directorty.**
-If running on a headless machine, one can try using `gdown` package available through `pip`, e.g.  ```gdown 10WuqchbaVqLZthWtGjth2QMlSfEthw_t```
-
-3. Enter the container downloaded in Step 2  
-> ./enter_container.sh
-
-The enter_container script importantly specifies the container to use before running the `./eic-shell` command.
-One can set this environment variable themselves with `export SIF=$PWD/working_image.sif`.
-
-4. Run get_frameworks.sh. This grabs specific commits of the repositories mentioned above, builds them, and sets a handful of important environment variables
+3. Run get_frameworks.sh. This grabs the geometry repositories mentioned above, builds them, and sets a handful of important environment variables
 > source get_frameworks.sh
 
 This downloads the specific commits used to generate data. It builds them and and then sources the setup_env.sh script to set a handful of important environment variables inside the container.
 Make sure you're still in the container when running this.
-
-5. Try the simulation
+### Note: You need to use `source setup_env.sh` everytime you want to generate data. It is done automatically the first time in `get_frameworks.sh`.
+4. Try the simulation
 > $DETECTOR_PATH/scripts/run_sim_hepmc.sh -part "pi+" -n 10 -p 20
 
 Also make sure to still be in the container when running this.
 This last command will use a HepMC generator (`$DETECTOR_PATH/hepmc_generation/gen_particles.cxx`) that fires a single particle gun along the proton beam axis to generate 10 pions with a momentum 20 GeV.
 Then, digitization and reconstruction will be run with `$DETECTOR_PATH/scripts/hadron_endcap_reco.py`
-Output will contain sim_${info_string}.edm4hep.root and rec_${info_string}.edm4hep.root files, which correspond to the G4-level and reconstructed level respectively (digitization, clustering). ${info_string} can be set within run_sim_hepmc.sh and is set by default to include the particle name, energy, and theta values by default. 
+Output will contain sim_${info_string}.edm4hep.root and rec_${info_string}.edm4hep.root files, which correspond to the G4-level and reconstructed level respectively (digitized only at this point). ${info_string} can be set within run_sim_hepmc.sh and is set by default to include the particle name, energy, and theta values by default. 
 The files will contain a ROOT TTree with the generated particles, hits at the G4 level, and hits after digitization and reconstruction.
 We will mainly be working with hits after reconstruction.
 
@@ -55,7 +45,7 @@ The HepMC generator contains parameters for minimum and maximum values of phi an
 
 ### Note on geometry: Please read the README in the [eic_geometry](https://github.com/eiccodesign/eic_geometry) repo if you have questions about the simulation geometry. 
 
-6. Download and install HDF5
+5. Download and install HDF5
 While still inside the container, navigate to `to_hdf5`, and `source` the grab hdf5 script. Then run the next two commands to compile the code.
 > make root_to_hdf5
 
@@ -63,7 +53,7 @@ While still inside the container, navigate to `to_hdf5`, and `source` the grab h
 
 ### Once setup
 To re-enter the container, one just need to run two commands:
-> ./enter_container.sh
+> ./eic-shell
 
 > source setup_env.sh
 

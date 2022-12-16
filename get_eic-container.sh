@@ -1,6 +1,4 @@
 #!/bin/bash
 
-mkdir eic
 cd eic
-curl https://eicweb.phy.anl.gov/containers/eic_container/-/raw/master/install.sh | bash
-mkdir development
+curl -L https://github.com/eic/eic-shell/raw/main/install.sh | bash
