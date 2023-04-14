@@ -199,7 +199,6 @@ void write_data(
             size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + subsys_fill[si];
             //Index for flattened 3D vector
 
-            /* (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] * 1000 ; //GeV to MeV */
             (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] ; //GeV
             (*(subsys_data[si]))[X_index] = (*(subsysX[si]))[h_hit] ;
             (*(subsys_data[si]))[Y_index] = (*(subsysY[si]))[h_hit] ;
@@ -479,8 +478,8 @@ int main(int argc, char *argv[]){
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  /* find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max); */
-  eventsN_max = 200000; calo_NHits_max = 1861; mcNParticles_max = 30;
+  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
+  /* eventsN_max = 200000; calo_NHits_max = 1861; mcNParticles_max = 30; */
 
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
