@@ -202,13 +202,16 @@ void write_data(
 
             /* FIXME: swap the indecies to match jetnetp after fixing mc_dataset */
             size_t E_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 0;
-            fprintf(stderr, "%u %s: E_Index = %u \n",__LINE__,__func__,E_index);
+            size_t X_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 1;
+            size_t Y_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 2;
+            size_t Z_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 3;
+            /* fprintf(stderr, "%u %s: E_Index = %u \n",__LINE__,__func__,E_index); */
 
-            E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + subsys_fill[si];
-            fprintf(stderr, "%u %s: E_Index = %u \n",__LINE__,__func__,E_index);
-            size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max + subsys_fill[si];
-            size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max + subsys_fill[si];
-            size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + subsys_fill[si];
+            /* size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + subsys_fill[si]; */
+            /* size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max + subsys_fill[si]; */
+            /* size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max + subsys_fill[si]; */
+            /* size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + subsys_fill[si]; */
+            /* fprintf(stderr, "%u %s: E_Index = %u \n",__LINE__,__func__,E_index); */
             //Index for flattened 3D vector
 
 
@@ -230,9 +233,9 @@ void write_data(
 
          mc_data[iblock*mc_row_size + 0] = subsys_fill[si]; 
          mc_data[iblock*mc_row_size + 1] = subsys_sumE[si]; 
-         for (size_t ivar = 0; ivar < mc_row_size; ivar++) {
-           std::cout << "index = " << (iblock*mc_row_size + ivar) << " / " << mc_data.size() << std::endl;
-         }
+         /* for (size_t ivar = 0; ivar < mc_row_size; ivar++) { */
+         /*   std::cout << "index = " << (iblock*mc_row_size + ivar) << " / " << mc_data.size() << std::endl; */
+         /* } */
       }//si
 
       bool print_cal = false;
@@ -426,9 +429,11 @@ int main(int argc, char *argv[]){
       sprintf( ssname, "HcalEndcapPInsertHitsReco" ) ;
       if ( strcmp( lob->At(i) -> GetName(), ssname ) == 0 ) {
         printf("             - found %s.\n", ssname ) ;
-        sprintf( subsystem_prefixes[si], "%s", ssname ) ;
-        sprintf( subsystem_short_names[si], "hcali" )  ;
-        si++ ;
+        printf("             - NOT USING, SKIPPING %s.\n", ssname ) ;
+        continue;
+        /* sprintf( subsystem_prefixes[si], "%s", ssname ) ; */
+        /* sprintf( subsystem_short_names[si], "hcali" )  ; */
+        /* si++ ; */
       }
       sprintf( ssname, "EcalEndcapPHitsReco" ) ;
       if ( strcmp( lob->At(i) -> GetName(), ssname ) == 0 ) {
@@ -480,8 +485,8 @@ int main(int argc, char *argv[]){
   hsize_t calo_dim_extend[n_subsystems][RANK] ;
   for ( size_t si=0; si<n_subsystems; si++ ) {
     calo_dim_extend[si][0] = block_size ;
-    calo_dim_extend[si][1] = cal_row_size ;
-    calo_dim_extend[si][2] = calo_NHits_max ;
+    calo_dim_extend[si][1] = calo_NHits_max ;
+    calo_dim_extend[si][2] = cal_row_size ;
   } // si
 
   hsize_t mc_dim_extend[mc_RANK] = {block_size, mc_row_size};
@@ -501,8 +506,8 @@ int main(int argc, char *argv[]){
   hsize_t calo_dim_max[n_subsystems][RANK] ;
   for ( size_t si=0; si<n_subsystems; si++ ) {
     calo_dim_max[si][0] = H5S_UNLIMITED ; //for unlimited NEvents
-    calo_dim_max[si][1] = cal_row_size ; //N calo variables per hit
-    calo_dim_max[si][2] = calo_NHits_max ;
+    calo_dim_max[si][1] = calo_NHits_max ;
+    calo_dim_max[si][2] = cal_row_size ; //N calo variables per hit
   } // si
 
   H5::DataSpace* calo_data_space[MAX_SUBSYS] ;
