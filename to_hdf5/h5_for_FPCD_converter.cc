@@ -19,8 +19,9 @@ using namespace H5;
 #define HDF5_USE_DEFLATE
 #endif
 
+#define particle_gun true
 #define RANK 3 //Event No., branch, variable index
-#define mc_RANK 2 //Event No., branch, variable index
+#define cluster_RANK 2 //Event No., branch, variable index
 
 #define MAX_SUBSYS 10 // max number of subsystems
 
@@ -43,12 +44,12 @@ bool CheckValue(ROOT::Internal::TTreeReaderValueBase& value) {
 
 //-----------------------------------------------------------------------------------------------------
 
-//Obtain No. Calo hits and MC particles for setting HDF5 dimensions
+//Obtain No. cell hits and MC particles for setting HDF5 dimensions
 void find_max_dims(
     char *argv_first[],
     char *argv_last[],
     size_t &eventsN_max,
-    size_t &calo_NHits_max,
+    size_t &cell_NHits_max,
     size_t &mcNParticles_max) {
 
 
@@ -82,12 +83,12 @@ void find_max_dims(
 
           for ( int si=0; si<n_subsystems; si++ ) {
                size_t subsysNHits = subsysE[si] -> GetSize();
-               calo_NHits_max = std::max(calo_NHits_max, subsysNHits);
+               cell_NHits_max = std::max(cell_NHits_max, subsysNHits);
           }
 
           if (i%1000 == 0) {
-            fprintf(stderr, "%s: %d: event = %i / %u, max Calo Hits= %u, max MC Particles = %u\n",
-                __func__, __LINE__, i, eventsN_max, calo_NHits_max, mcNParticles_max);
+            fprintf(stderr, "%s: %d: event = %i / %u, max cell Hits= %u, max MC Particles = %u\n",
+                __func__, __LINE__, i, eventsN_max, cell_NHits_max, mcNParticles_max);
           }
 
           i++;
@@ -102,8 +103,8 @@ void find_max_dims(
     file->Close();
     delete file;
 
-    printf("\n\n  find_max_dims :   eventsN_max = %u,  calo_NHits_max = %u,  mcNParticles_max = %u\n\n",
-       eventsN_max, calo_NHits_max, mcNParticles_max ) ;
+    printf("\n\n  find_max_dims :   eventsN_max = %u,  cell_NHits_max = %u,  mcNParticles_max = %u\n\n",
+       eventsN_max, cell_NHits_max, mcNParticles_max ) ;
 
   }//argc
 
@@ -112,16 +113,16 @@ void find_max_dims(
 //-----------------------------------------------------------------------------------------------------
 
 void write_data(
-    H5::DataSet* calo_data_set[],
-    H5::DataSet &mc_data_set,
-    size_t cal_row_size,
-    size_t mc_row_size,
+    H5::DataSet* cell_data_set[],
+    H5::DataSet &cluster_data_set,
+    size_t cell_row_size,
+    size_t cluster_row_size,
     hsize_t *offset,
-    hsize_t *mc_offset,
-    const hsize_t calo_dim_extend[][RANK],
-    const hsize_t *mc_dim_extend,
+    hsize_t *cluster_offset,
+    const hsize_t cell_dim_extend[][RANK],
+    const hsize_t *cluster_dim_extend,
     const UInt_t eventsN_max,
-    const UInt_t calo_NHits_max,
+    const UInt_t cell_NHits_max,
     const UInt_t mcNParticles_max,
     const UInt_t block_size,
     char *argv_first[], char *argv_last[]) 
@@ -151,7 +152,6 @@ void write_data(
     } // si
 
 
-
     TTreeReaderArray<int> mcPDG( events, Form("%s.PDG",mc_str));
     TTreeReaderArray<int> mcSimulatorStatus( events, Form("%s.simulatorStatus",mc_str));
     TTreeReaderArray<int> mcGeneratorStatus( events, Form("%s.generatorStatus",mc_str));
@@ -163,11 +163,11 @@ void write_data(
 
     std::vector<float>* subsys_data[MAX_SUBSYS] ;
     for ( int si=0; si<n_subsystems; si++ ) {
-       subsys_data[si] = new std::vector<float>( block_size * cal_row_size * calo_NHits_max, NAN );
+       subsys_data[si] = new std::vector<float>( block_size * cell_row_size * cell_NHits_max, NAN );
     } // si
 
 
-    std::vector<float> mc_data(block_size *  mc_row_size, NAN);
+    std::vector<float> cluster_data(block_size *  cluster_row_size, NAN);
 
     //Check the max dims are passed correctly
 
@@ -200,20 +200,11 @@ void write_data(
             if ( (*(subsysE[si]))[h_hit] <= 0.00006 ) continue ; //MIPS and Empty Cells
             if ( (*(subsysT[si]))[h_hit] > 200 ) continue ;
 
-            /* FIXME: swap the indecies to match jetnetp after fixing mc_dataset */
-            size_t E_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 0;
-            size_t X_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 1;
-            size_t Y_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 2;
-            size_t Z_index = iblock*calo_NHits_max*cal_row_size + (cal_row_size*subsys_fill[si]) + 3;
-            /* fprintf(stderr, "%u %s: E_Index = %u \n",__LINE__,__func__,E_index); */
-
-            /* size_t E_index = iblock*cal_row_size*calo_NHits_max + 0*calo_NHits_max + subsys_fill[si]; */
-            /* size_t X_index = iblock*cal_row_size*calo_NHits_max + 1*calo_NHits_max + subsys_fill[si]; */
-            /* size_t Y_index = iblock*cal_row_size*calo_NHits_max + 2*calo_NHits_max + subsys_fill[si]; */
-            /* size_t Z_index = iblock*cal_row_size*calo_NHits_max + 3*calo_NHits_max + subsys_fill[si]; */
-            /* fprintf(stderr, "%u %s: E_Index = %u \n",__LINE__,__func__,E_index); */
+            size_t E_index = iblock*cell_NHits_max*cell_row_size + (cell_row_size*subsys_fill[si]) + 0;
+            size_t X_index = iblock*cell_NHits_max*cell_row_size + (cell_row_size*subsys_fill[si]) + 1;
+            size_t Y_index = iblock*cell_NHits_max*cell_row_size + (cell_row_size*subsys_fill[si]) + 2;
+            size_t Z_index = iblock*cell_NHits_max*cell_row_size + (cell_row_size*subsys_fill[si]) + 3;
             //Index for flattened 3D vector
-
 
             (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] ; //GeV
             (*(subsys_data[si]))[X_index] = (*(subsysX[si]))[h_hit] ;
@@ -225,18 +216,41 @@ void write_data(
 
          } // h_hit
 
-        /* fprintf(stderr, "%u %s: n_fill = %u \n",__LINE__,__func__,subsys_fill[si]); */
-        /* fprintf(stderr, "%u %s: sumE = %1.4f \n",__LINE__,__func__,subsys_sumE[si]); */
+         /* fprintf(stderr, "%u %s: n_fill = %u \n",__LINE__,__func__,subsys_fill[si]); */
+         /* fprintf(stderr, "%u %s: sumE = %1.4f \n",__LINE__,__func__,subsys_sumE[si]); */
          if ( subsysNHits[si] == 0 ) continue ;
          if ( subsys_fill[si] == 0 ) continue ;
          if ( subsys_sumE[si]  < 0.1   ) continue ;
 
-         mc_data[iblock*mc_row_size + 0] = subsys_fill[si]; 
-         mc_data[iblock*mc_row_size + 1] = subsys_sumE[si]; 
-         /* for (size_t ivar = 0; ivar < mc_row_size; ivar++) { */
-         /*   std::cout << "index = " << (iblock*mc_row_size + ivar) << " / " << mc_data.size() << std::endl; */
-         /* } */
+         //FIXME: Fill with MCParticles Momentum
+         cluster_data[iblock*cluster_row_size + 0] = subsys_fill[si]; //FIXME: ONLY READS FIRST SUBSYSTEM
+         cluster_data[iblock*cluster_row_size + 1] = subsys_sumE[si]; 
+         //FIXME: Put outside fo se look, chang to  Nsub*row size
       }//si
+
+      size_t mc_fill = 0;
+      size_t mcNParticles = mcMass.GetSize();
+      for (size_t particle = 0; particle < mcNParticles; particle++) 
+      {
+        if (mcGeneratorStatus[particle] != 1) continue;
+
+        //Calculated Values
+        float mcPT = hypot(mcPX[particle], mcPY[particle]);
+        float mcP = hypot(mcPX[particle], mcPY[particle], mcPZ[particle]);
+        float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
+
+        cluster_data[iblock*cluster_row_size + 2] = mcP;
+        /* mc_data[(iblock*mc_row_size + 0)*mcNParticles_max + mc_fill] = mcPDG[particle]; */ 
+        /* mc_data[(iblock*mc_row_size + 1)*mcNParticles_max + mc_fill] = mcSimulatorStatus[particle]; */ 
+        /* mc_data[(iblock*mc_row_size + 2)*mcNParticles_max + mc_fill] = mcGeneratorStatus[particle]; */ 
+        /* mc_data[(iblock*mc_row_size + 3)*mcNParticles_max + mc_fill] = mcPX[particle]; */ 
+        /* mc_data[(iblock*mc_row_size + 4)*mcNParticles_max + mc_fill] = mcPY[particle]; */ 
+        /* mc_data[(iblock*mc_row_size + 5)*mcNParticles_max + mc_fill] = mcPZ[particle]; */ 
+        /* mc_data[(iblock*mc_row_size + 6)*mcNParticles_max + mc_fill] = mcMass[particle]; */ 
+        /* mc_data[(iblock*mc_row_size + 7)*mcNParticles_max + mc_fill] = mcPT; */ 
+        if (particle_gun)
+          break;//break after first particle
+      }
 
       bool print_cal = false;
       bool print_mc = false;
@@ -249,8 +263,8 @@ void write_data(
         if (print_cal){
           for ( int si=0; si<n_subsystems; si++ ) {
             for (size_t h_hit = 0; h_hit < subsysNHits[si]; h_hit++) {
-              float E = (*(subsys_data[si]))[(iblock*cal_row_size + 0)*calo_NHits_max + h_hit];
-              float Z = (*(subsys_data[si]))[(iblock*cal_row_size + 3)*calo_NHits_max + h_hit];
+              float E = (*(subsys_data[si]))[(iblock*cell_row_size + 0)*cell_NHits_max + h_hit];
+              float Z = (*(subsys_data[si]))[(iblock*cell_row_size + 1)*cell_NHits_max + h_hit];
               if (std::isnan(E)) break;
               if (h_hit%10 == 0)
               {
@@ -262,34 +276,25 @@ void write_data(
         } // print_cal?
 
         if (print_mc) {
-          for (size_t particle = 0; particle < mcNParticles_max; particle++) {
-            float Mass = mcMass[particle];
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " GenStatus = "<<mc_data[(iblock*mc_row_size+2)*mcNParticles_max+particle]<<std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PX = " << mc_data[(iblock*mc_row_size + 3)*mcNParticles_max +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PY = " << mc_data[(iblock*mc_row_size + 4)*mcNParticles_max +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " PZ = " << mc_data[(iblock*mc_row_size + 5)*mcNParticles_max +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " Theta = "<< mc_data[(iblock*mc_row_size+9)*mcNParticles_max +particle] << std::endl;
-            std::cout << "MC Particle # " << particle << " / " << mcNParticles_max << " Momentum = "<< mc_data[(iblock*mc_row_size+8)*mcNParticles_max+particle]<<std::endl;
-            std::cout << std::endl;
-            break; //first index should be filled, followed by nans. rm this if want to see all particles
-          }           
-          std::cout << "Event Number = " << i << std::endl;
-
+          fprintf(stderr, "\n%u %s: Number of Cells = %llu\n",
+              __LINE__,__func__,cluster_data[iblock*cluster_row_size + 0]);
+          fprintf(stderr, "%u %s: Cluster Sum = %1.2f\n",
+              __LINE__,__func__,cluster_data[iblock*cluster_row_size + 1]);
         }//print
 
         if (offset[0] == 0) {
           // Writing the first event. Data spaces is already created with space for one event
           // see file.createDataSet()
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            calo_data_set[si] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT );
+            cell_data_set[si] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT );
           } // si
-          mc_data_set.write(&mc_data[0], H5::PredType::NATIVE_FLOAT);
+          cluster_data_set.write(&cluster_data[0], H5::PredType::NATIVE_FLOAT);
 
           //Make sure to clear previous arrays
           for ( size_t si=0; si<n_subsystems; si++ ) {
             std::fill( (*(subsys_data[si])).begin(), (*(subsys_data[si])).end(),NAN);
           }
-          std::fill(mc_data.begin(),mc_data.end(),NAN);
+          std::fill(cluster_data.begin(),cluster_data.end(),NAN);
         }
 
         else { //offset[0] =/= 0
@@ -297,23 +302,22 @@ void write_data(
           hsize_t subsys_dim_extended[MAX_SUBSYS][RANK] ;
 
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            subsys_dim_extended[si][0] = offset[0] + calo_dim_extend[si][0] ;
-            subsys_dim_extended[si][1] = calo_dim_extend[si][1] ;
-            subsys_dim_extended[si][2] = calo_dim_extend[si][2] ;
+            subsys_dim_extended[si][0] = offset[0] + cell_dim_extend[si][0] ;
+            subsys_dim_extended[si][1] = cell_dim_extend[si][1] ;
+            subsys_dim_extended[si][2] = cell_dim_extend[si][2] ;
           } // si
 
 
-          const hsize_t mc_dim_extended[mc_RANK] = 
-          { mc_offset[0]  +  mc_dim_extend[0],   mc_dim_extend[1] };
+          const hsize_t cluster_dim_extended[cluster_RANK] = 
+          { cluster_offset[0]  +  cluster_dim_extend[0],   cluster_dim_extend[1] };
 
           // Extend to the new dimension
-          for ( size_t si=0; si<n_subsystems; si++ ) {
-            //printf("  %u %s : calling extend with  %u, %u, %u\n", si, subsystem_prefixes[si],
-            //subsys_dim_extended[si][0], subsys_dim_extended[si][1], subsys_dim_extended[si][2] ) ;
-            calo_data_set[si] -> extend( subsys_dim_extended[si] ) ;
+          for ( size_t si=0; si<n_subsystems; si++ ) 
+          {
+            cell_data_set[si] -> extend( subsys_dim_extended[si] ) ;
           }
 
-          mc_data_set.extend(mc_dim_extended);
+          cluster_data_set.extend(cluster_dim_extended);
 
           // Select the hyperslab that only encompasses the
           // difference from extending the data space (i.e. the
@@ -321,32 +325,32 @@ void write_data(
 
           H5::DataSpace* subsys_file_space[MAX_SUBSYS] ;
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            subsys_file_space[si] = new H5::DataSpace( calo_data_set[si] -> getSpace() ) ;
+            subsys_file_space[si] = new H5::DataSpace( cell_data_set[si] -> getSpace() ) ;
           } // si
 
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            subsys_file_space[si] -> selectHyperslab( H5S_SELECT_SET, calo_dim_extend[si], offset ) ;
+            subsys_file_space[si] -> selectHyperslab( H5S_SELECT_SET, cell_dim_extend[si], offset ) ;
           } // si
 
-          H5::DataSpace mc_file_space = mc_data_set.getSpace();
+          H5::DataSpace cluster_file_space = cluster_data_set.getSpace();
 
-          mc_file_space.selectHyperslab(
-              H5S_SELECT_SET, mc_dim_extend, mc_offset);
+          cluster_file_space.selectHyperslab(
+              H5S_SELECT_SET, cluster_dim_extend, cluster_offset);
 
 
           // define memory size to fit the extended hyperslab
           H5::DataSpace* subsys_memory_space[MAX_SUBSYS] ;
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            subsys_memory_space[si] = new H5::DataSpace( RANK, calo_dim_extend[si], NULL ) ;
+            subsys_memory_space[si] = new H5::DataSpace( RANK, cell_dim_extend[si], NULL ) ;
           } // si
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            calo_data_set[si] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT,
+            cell_data_set[si] -> write( &(*(subsys_data[si]))[0], H5::PredType::NATIVE_FLOAT,
                 *subsys_memory_space[si], *subsys_file_space[si] ) ;
           } // si
 
-          H5::DataSpace mc_memory_space(mc_RANK, mc_dim_extend, NULL);
-          mc_data_set.write(&mc_data[0], H5::PredType::NATIVE_FLOAT,
-              mc_memory_space, mc_file_space);
+          H5::DataSpace cluster_memory_space(cluster_RANK, cluster_dim_extend, NULL);
+          cluster_data_set.write(&cluster_data[0], H5::PredType::NATIVE_FLOAT,
+              cluster_memory_space, cluster_file_space);
 
 
           // Remember to clear arrays before beginning next block!
@@ -354,7 +358,7 @@ void write_data(
             std::fill( (*(subsys_data[si])).begin(), (*(subsys_data[si])).end(),NAN);
           } // si
 
-          std::fill(mc_data.begin(),mc_data.end(),NAN);
+          std::fill(cluster_data.begin(),cluster_data.end(),NAN);
 
           //Delete H5 file and memory spaces
           for ( size_t si=0; si<n_subsystems; si++ ) {
@@ -365,7 +369,7 @@ void write_data(
         }//Offset[0] =/= 0? 
 
         offset[0]+=block_size;
-        mc_offset[0]+=block_size;
+        cluster_offset[0]+=block_size;
 
         std::cout << std::endl;
         fprintf(stderr, "\r%s: %d: %llu / %lld", __func__,__LINE__, offset[0],
@@ -423,7 +427,7 @@ int main(int argc, char *argv[]){
       if ( strcmp( lob->At(i) -> GetName(), ssname ) == 0 ) {
         printf("             - found %s.\n", ssname ) ;
         sprintf( subsystem_prefixes[si], "%s", ssname ) ;
-        sprintf( subsystem_short_names[si], "hcal" )  ;
+        sprintf( subsystem_short_names[si], "hcal_cells" )  ;
         si++ ;
       }
       sprintf( ssname, "HcalEndcapPInsertHitsReco" ) ;
@@ -460,11 +464,11 @@ int main(int argc, char *argv[]){
   printf("\n\n found %d subsystems.\n\n", n_subsystems ) ;
 
 
-  static const size_t cal_row_size = 4; //Number of calorimeter hit variables
-  static const size_t mc_row_size = 2; //Cluster Variables: Energy, N_Cells
+  static const size_t cell_row_size = 4; //Number of cellrimeter hit variables
+  static const size_t cluster_row_size = 3; //Cluster Variables: Energy, N_Cells
 
   size_t eventsN_max = 0;
-  size_t calo_NHits_max = 0;
+  size_t cell_NHits_max = 0;
   size_t mcNParticles_max = 0;
   size_t block_size = 100; //affects chunk size, 
 
@@ -472,8 +476,8 @@ int main(int argc, char *argv[]){
   const double z_offset = 3800.; //[mm]. Fixes some hardcoded setting in ATHENA detector
   const double z_max = 1200.; // actual length of hcal in z [mm]
 
-  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, calo_NHits_max, mcNParticles_max);
-  /* eventsN_max = 200000; calo_NHits_max = 1861; mcNParticles_max = 30; */
+  find_max_dims(argv + 1, argv + argc - 1, eventsN_max, cell_NHits_max, mcNParticles_max);
+  /* eventsN_max = 200000; cell_NHits_max = 1861; mcNParticles_max = 30; */
 
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
@@ -482,51 +486,51 @@ int main(int argc, char *argv[]){
   H5::H5File file( file_str.c_str(), H5F_ACC_TRUNC );
 
   //The tensor dimension for each new chunk of events
-  hsize_t calo_dim_extend[n_subsystems][RANK] ;
+  hsize_t cell_dim_extend[n_subsystems][RANK] ;
   for ( size_t si=0; si<n_subsystems; si++ ) {
-    calo_dim_extend[si][0] = block_size ;
-    calo_dim_extend[si][1] = calo_NHits_max ;
-    calo_dim_extend[si][2] = cal_row_size ;
+    cell_dim_extend[si][0] = block_size ;
+    cell_dim_extend[si][1] = cell_NHits_max ;
+    cell_dim_extend[si][2] = cell_row_size ;
   } // si
 
-  hsize_t mc_dim_extend[mc_RANK] = {block_size, mc_row_size};
+  hsize_t cluster_dim_extend[cluster_RANK] = {block_size, cluster_row_size};
 
   //Check the hyperslab/extension dimensions are correct
   fprintf(stderr,"\n%s: %d: HDF5 Chunk Size = %u\n",__func__,__LINE__,block_size);
 
   for ( size_t si=0; si<n_subsystems; si++ ) {
-    fprintf(stderr, "%s: %d: %s : calo_dim_extend = %u %u %u\n", 
-        __func__, __LINE__, subsystem_prefixes[si], calo_dim_extend[si][0],calo_dim_extend[si][1],calo_dim_extend[si][2]);
+    fprintf(stderr, "%s: %d: %s : cell_dim_extend = %u %u %u\n", 
+        __func__, __LINE__, subsystem_prefixes[si], cell_dim_extend[si][0],cell_dim_extend[si][1],cell_dim_extend[si][2]);
   }
-  fprintf(stderr, "%s: %d:  mc_dim_extend  = %u %u  %u\n", 
-      __func__, __LINE__, mc_dim_extend[0],mc_dim_extend[1]);
+  fprintf(stderr, "%s: %d:  cluster_dim_extend  = %u %u  %u\n", 
+      __func__, __LINE__, cluster_dim_extend[0],cluster_dim_extend[1]);
 
 
-  //Create Calo Subsystem Dataspaces + PropLists
-  hsize_t calo_dim_max[n_subsystems][RANK] ;
+  //Create cell Subsystem Dataspaces + PropLists
+  hsize_t cell_dim_max[n_subsystems][RANK] ;
   for ( size_t si=0; si<n_subsystems; si++ ) {
-    calo_dim_max[si][0] = H5S_UNLIMITED ; //for unlimited NEvents
-    calo_dim_max[si][1] = calo_NHits_max ;
-    calo_dim_max[si][2] = cal_row_size ; //N calo variables per hit
+    cell_dim_max[si][0] = H5S_UNLIMITED ; //for unlimited NEvents
+    cell_dim_max[si][1] = cell_NHits_max ;
+    cell_dim_max[si][2] = cell_row_size ; //N cell variables per hit
   } // si
 
-  H5::DataSpace* calo_data_space[MAX_SUBSYS] ;
+  H5::DataSpace* cell_data_space[MAX_SUBSYS] ;
   for ( size_t si=0; si<n_subsystems; si++ ) {
     printf("  Making dataspace for subsystem %d %s\n", si, subsystem_prefixes[si] ) ;
-    calo_data_space[si] = new H5::DataSpace( RANK, calo_dim_extend[si], calo_dim_max[si] ) ;
+    cell_data_space[si] = new H5::DataSpace( RANK, cell_dim_extend[si], cell_dim_max[si] ) ;
   } // si
 
-  H5::DSetCreatPropList* calo_property[MAX_SUBSYS] ;
+  H5::DSetCreatPropList* cell_property[MAX_SUBSYS] ;
   for ( size_t si=0; si<n_subsystems; si++ ) {
-    calo_property[si] = new H5::DSetCreatPropList();
+    cell_property[si] = new H5::DSetCreatPropList();
   } // si
 
 
   //Create MC Gen Dataspaces + PropLists
-  hsize_t mc_dim_max[mc_RANK] =  {H5S_UNLIMITED, mc_row_size};
+  hsize_t cluster_dim_max[cluster_RANK] =  {H5S_UNLIMITED, cluster_row_size};
   printf("  Making dataspace for MCParticles\n" ) ;
-  H5::DataSpace mc_data_space(mc_RANK, mc_dim_extend, mc_dim_max);
-  H5::DSetCreatPropList mc_property = H5::DSetCreatPropList();
+  H5::DataSpace cluster_data_space(cluster_RANK, cluster_dim_extend, cluster_dim_max);
+  H5::DSetCreatPropList cluster_property = H5::DSetCreatPropList();
 
 #ifdef HDF5_USE_DEFLATE
   // Check for zlib (deflate) availability and enable 
@@ -545,51 +549,52 @@ int main(int argc, char *argv[]){
     else {
       printf(" calling setDeflate\n") ;
       for ( size_t si=0; si<n_subsystems; si++ ) {
-        calo_property[si] -> setDeflate(1) ;
+        cell_property[si] -> setDeflate(1) ;
       }
-      mc_property.setDeflate(1);
+      cluster_property.setDeflate(1);
     }
   }
 #endif // HDF5_USE_DEFLATE
 
-  hsize_t calo_dim_chunk[MAX_SUBSYS][RANK] ;
+  hsize_t cell_dim_chunk[MAX_SUBSYS][RANK] ;
   for ( size_t si; si<n_subsystems; si++ ) {
-    calo_dim_chunk[si][0] = calo_dim_extend[si][0] ;
-    calo_dim_chunk[si][1] = calo_dim_extend[si][1] ;
-    calo_dim_chunk[si][2] = calo_dim_extend[si][2] ;
+    cell_dim_chunk[si][0] = cell_dim_extend[si][0] ;
+    cell_dim_chunk[si][1] = cell_dim_extend[si][1] ;
+    cell_dim_chunk[si][2] = cell_dim_extend[si][2] ;
   }
 
-  hsize_t mc_dim_chunk[mc_RANK] = {
-    mc_dim_extend[0],
-    mc_dim_extend[1]
+  hsize_t cluster_dim_chunk[cluster_RANK] = {
+    cluster_dim_extend[0],
+    cluster_dim_extend[1]
   };
 
 
   for ( size_t si; si<n_subsystems; si++ ) {
-    printf("  Calling setChunk for subsystem %u  %s :  %u, %u, %u\n", si, subsystem_prefixes[si], calo_dim_chunk[si][0], calo_dim_chunk[si][1], calo_dim_chunk[si][2] ) ;
-    calo_property[si] -> setChunk( RANK, calo_dim_chunk[si] ) ;
+    printf("  Calling setChunk for subsystem %u  %s :  %u, %u, %u\n", si, subsystem_prefixes[si], cell_dim_chunk[si][0], cell_dim_chunk[si][1], cell_dim_chunk[si][2] ) ;
+    cell_property[si] -> setChunk( RANK, cell_dim_chunk[si] ) ;
   } // si
 
-  mc_property.setChunk(mc_RANK, mc_dim_chunk);
+  cluster_property.setChunk(cluster_RANK, cluster_dim_chunk);
 
 
-  H5::DataSet* calo_data_set[MAX_SUBSYS] ;
+  H5::DataSet* cell_data_set[MAX_SUBSYS] ;
   for ( size_t si; si<n_subsystems; si++ ) {
-    calo_data_set[si] = new H5::DataSet( file.createDataSet( subsystem_short_names[si], H5::PredType::NATIVE_FLOAT, *calo_data_space[si], *calo_property[si] ) ) ;
+    cell_data_set[si] = new H5::DataSet( file.createDataSet( subsystem_short_names[si], H5::PredType::NATIVE_FLOAT, *cell_data_space[si], *cell_property[si] ) ) ;
   } // si
 
 
-  H5::DataSet mc_data_set =
-    file.createDataSet("mc", H5::PredType::NATIVE_FLOAT,
-        mc_data_space, mc_property);
+  H5::DataSet cluster_data_set =
+    /* file.createDataSet("mc", H5::PredType::NATIVE_FLOAT, */
+    file.createDataSet("cluster", H5::PredType::NATIVE_FLOAT,
+        cluster_data_space, cluster_property);
 
   hsize_t offset[RANK] = {0, 0, 0};
-  hsize_t mc_offset[mc_RANK] = {0, 0};
+  hsize_t cluster_offset[cluster_RANK] = {0, 0};
 
-  write_data(calo_data_set, mc_data_set,
-      cal_row_size, mc_row_size, offset,  mc_offset, 
-      calo_dim_extend, mc_dim_extend,
-      eventsN_max, calo_NHits_max, mcNParticles_max, 
+  write_data(cell_data_set, cluster_data_set,
+      cell_row_size, cluster_row_size, offset,  cluster_offset, 
+      cell_dim_extend, cluster_dim_extend,
+      eventsN_max, cell_NHits_max, mcNParticles_max, 
       block_size,argv + 1, argv + argc - 1);
 
   fprintf(stderr,"\n\n%s: %d: [Complete] \n\n",__func__,__LINE__);
@@ -597,9 +602,9 @@ int main(int argc, char *argv[]){
   file.close();
 
   for ( size_t si; si<n_subsystems; si++ ) {
-    delete calo_data_set[si] ;
-    delete calo_data_space[si] ;
-    delete calo_property[si] ;
+    delete cell_data_set[si] ;
+    delete cell_data_space[si] ;
+    delete cell_property[si] ;
   } // si
 
   return EXIT_SUCCESS;
