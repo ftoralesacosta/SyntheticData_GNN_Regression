@@ -196,6 +196,7 @@ void write_data(
 
       for ( int si=0; si<n_subsystems; si++ ) {
         for (size_t h_hit = 0; h_hit < subsysNHits[si]; h_hit++) {
+            if (h_hit >= cell_NHits_max) break;
             if ( (*(subsysE[si]))[h_hit] > 1e10) continue ; //Spikey Cells. Should be fixed in Juggler Commit post Feb2022
             if ( (*(subsysE[si]))[h_hit] <= 0.00006 ) continue ; //MIPS and Empty Cells
             if ( (*(subsysT[si]))[h_hit] > 200 ) continue ;
@@ -479,6 +480,7 @@ int main(int argc, char *argv[]){
   find_max_dims(argv + 1, argv + argc - 1, eventsN_max, cell_NHits_max, mcNParticles_max);
   /* eventsN_max = 200000; cell_NHits_max = 1861; mcNParticles_max = 30; */
 
+  cell_NHits_max = 1000;
 
   // Access mode H5F_ACC_TRUNC truncates any existing file, while
   // not throwing an exception (unlike H5F_ACC_RDWR)
