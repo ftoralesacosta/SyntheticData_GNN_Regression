@@ -163,11 +163,11 @@ void write_data(
 
     std::vector<float>* subsys_data[MAX_SUBSYS] ;
     for ( int si=0; si<n_subsystems; si++ ) {
-       subsys_data[si] = new std::vector<float>( block_size * cell_row_size * cell_NHits_max, NAN );
+       subsys_data[si] = new std::vector<float>( block_size * cell_row_size * cell_NHits_max, 0 );
     } // si
 
 
-    std::vector<float> cluster_data(block_size *  cluster_row_size, NAN);
+    std::vector<float> cluster_data(block_size *  cluster_row_size, 0);
 
     //Check the max dims are passed correctly
 
@@ -204,12 +204,14 @@ void write_data(
             size_t X_index = iblock*cell_NHits_max*cell_row_size + (cell_row_size*subsys_fill[si]) + 1;
             size_t Y_index = iblock*cell_NHits_max*cell_row_size + (cell_row_size*subsys_fill[si]) + 2;
             size_t Z_index = iblock*cell_NHits_max*cell_row_size + (cell_row_size*subsys_fill[si]) + 3;
+            size_t Mask_index=iblock*cell_NHits_max*cell_row_size+ (cell_row_size*subsys_fill[si]) + 4;
             //Index for flattened 3D vector
 
             (*(subsys_data[si]))[E_index] = (*(subsysE[si]))[h_hit] ; //GeV
             (*(subsys_data[si]))[X_index] = (*(subsysX[si]))[h_hit] ;
             (*(subsys_data[si]))[Y_index] = (*(subsysY[si]))[h_hit] ;
             (*(subsys_data[si]))[Z_index] = (*(subsysZ[si]))[h_hit] ;
+            (*(subsys_data[si]))[Mask_index] = 1;//See JetNet - arXiv:2106.11535 "mask"
 
             subsys_fill[si] ++ ;
             subsys_sumE[si] += (*(subsys_data[si]))[E_index];
@@ -222,10 +224,6 @@ void write_data(
          if ( subsys_fill[si] == 0 ) continue ;
          if ( subsys_sumE[si]  < 0.1   ) continue ;
 
-         //FIXME: Fill with MCParticles Momentum
-         cluster_data[iblock*cluster_row_size + 0] = subsys_fill[si]; //FIXME: ONLY READS FIRST SUBSYSTEM
-         cluster_data[iblock*cluster_row_size + 1] = subsys_sumE[si]; 
-         //FIXME: Put outside fo se look, chang to  Nsub*row size
       }//si
 
       size_t mc_fill = 0;
@@ -239,7 +237,8 @@ void write_data(
         float mcP = hypot(mcPX[particle], mcPY[particle], mcPZ[particle]);
         float mcTheta = acos(mcPZ[particle]/mcP)*180./M_PI;
 
-        cluster_data[iblock*cluster_row_size + 2] = mcP;
+        cluster_data[iblock*cluster_row_size + 0] = mcP;
+        cluster_data[iblock*cluster_row_size + 1] = mcTheta;
         /* mc_data[(iblock*mc_row_size + 0)*mcNParticles_max + mc_fill] = mcPDG[particle]; */ 
         /* mc_data[(iblock*mc_row_size + 1)*mcNParticles_max + mc_fill] = mcSimulatorStatus[particle]; */ 
         /* mc_data[(iblock*mc_row_size + 2)*mcNParticles_max + mc_fill] = mcGeneratorStatus[particle]; */ 
@@ -251,6 +250,11 @@ void write_data(
         if (particle_gun)
           break;//break after first particle
       }
+
+      //FIXME: Fill with MCParticles Momentum
+      cluster_data[iblock*cluster_row_size + 2] = subsys_sumE[0]; 
+      cluster_data[iblock*cluster_row_size + 3] = subsys_fill[0]; //FIXME: ONLY READS FIRST SUBSYSTEM, make sure HCAL
+      //FIXME: Put outside fo se look, chang to  Nsub*row size
 
       bool print_cal = false;
       bool print_mc = false;
@@ -292,9 +296,9 @@ void write_data(
 
           //Make sure to clear previous arrays
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            std::fill( (*(subsys_data[si])).begin(), (*(subsys_data[si])).end(),NAN);
+            std::fill( (*(subsys_data[si])).begin(), (*(subsys_data[si])).end(),0);
           }
-          std::fill(cluster_data.begin(),cluster_data.end(),NAN);
+          std::fill(cluster_data.begin(),cluster_data.end(),0);
         }
 
         else { //offset[0] =/= 0
@@ -355,10 +359,10 @@ void write_data(
 
           // Remember to clear arrays before beginning next block!
           for ( size_t si=0; si<n_subsystems; si++ ) {
-            std::fill( (*(subsys_data[si])).begin(), (*(subsys_data[si])).end(),NAN);
+            std::fill( (*(subsys_data[si])).begin(), (*(subsys_data[si])).end(),0);
           } // si
 
-          std::fill(cluster_data.begin(),cluster_data.end(),NAN);
+          std::fill(cluster_data.begin(),cluster_data.end(),0);
 
           //Delete H5 file and memory spaces
           for ( size_t si=0; si<n_subsystems; si++ ) {
@@ -464,8 +468,8 @@ int main(int argc, char *argv[]){
   printf("\n\n found %d subsystems.\n\n", n_subsystems ) ;
 
 
-  static const size_t cell_row_size = 4; //Number of cellrimeter hit variables
-  static const size_t cluster_row_size = 3; //Cluster Variables: Energy, N_Cells
+  static const size_t cell_row_size = 5; //Number of cellrimeter hit variables
+  static const size_t cluster_row_size = 4; //Cluster Variables: Energy, N_Cells
 
   size_t eventsN_max = 0;
   size_t cell_NHits_max = 0;
