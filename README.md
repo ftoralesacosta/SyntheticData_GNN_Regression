@@ -4,7 +4,7 @@
 1. Setup the environment for loading the container
 > source get_eic-container.sh
 
-This will download the nightly container and creates a few required directories for the next step. It also sets various environment variables for using the container 
+This will download an old container and creates a few required directories for the next step. It also sets various environment variables for using the container. An old container is used to ensure a stable and normalized environment for all users 
 
 2. Enter the container downloaded in Step 1
 > ./eic-shell
