@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export DETECTOR=hadron_endcap
-export DETECTOR_PATH=${EIC_SHELL_PREFIX}/share/${DETECTOR}
+export DETECTOR_PATH=${EIC_SHELL_PREFIX}/share/eic_geometry
 
 export LD_LIBRARY_PATH=${EIC_SHELL_PREFIX}/lib:$LD_LIBRARY_PATH
 export PATH=${EIC_SHELL_PREFIX}/bin:$PATH
