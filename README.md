@@ -1,4 +1,4 @@
-### This Repo aims to automate the process of setting up the environment for ATHENA simulation and reconstruction. There are scripts to download and mount the EIC Singularity container, as well as installing [our hadron endcap geometry](https://github.com/eiccodesign/eic_geometry) and the [IP6 (beamline) repository](https://github.com/eic/ip6). Lastly, it introduces HDF5 for the final data format.
+### This Repo aims to automate the process of setting up the environment for Graph Neural Network regression of collider data ePIC experiment simulation and reconstruction. There are scripts to download and mount the EIC Singularity container, as well as installing [our hadron endcap geometry](https://github.com/eiccodesign/eic_geometry) and the [IP6 (beamline) repository](https://github.com/eic/ip6). Lastly, it introduces HDF5 for the final data format.
 #### Prerequisites: linux (requires singularity v3+) and MacOS (requires docker) 
 
 1. Setup the environment for loading the container
